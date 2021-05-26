@@ -15,6 +15,7 @@ from plotly.subplots import make_subplots
 oilfield = 'kraynee'
 date_test = datetime.date(2019, 2, 1)
 date_end = datetime.date(2019, 4, 30)
+# Settings for РГД
 read_columns = {
     0: 27,
     1: 32,
@@ -26,6 +27,7 @@ skiprows = 11
 # oilfield = 'valyntoyskoe'
 # date_test = datetime.date(2019, 3, 1)
 # date_end = datetime.date(2019, 5, 31)
+# # Settings for РГД
 # read_columns = {
 #     0: 12,
 #     1: 16,
@@ -108,7 +110,7 @@ def create_well_plot(name: str, dfs: dict, liq=False) -> None:
             fig.add_trace(trace, row=2, col=1)
 
     if not Path(f'{path_save}/well plots/{mode}').exists():
-        Path(f'{path_save}/well plots/{mode}').mkdir()
+        Path(f'{path_save}/well plots/{mode}').mkdir(parents=True, exist_ok=True)
 
     pl.io.write_image(fig, file=f'{path_save}/well plots/{mode}/{name}.png',
                       width=1450, height=700, scale=2, engine='kaleido')
@@ -185,7 +187,7 @@ def draw_histogram_model(df_cumerr_model, model):
     fig.update_yaxes(title_text="Число скважин", row=3, col=1)
 
     if not Path(f'{path_save}/{model}').exists():
-        Path(f'{path_save}/{model}').mkdir()
+        Path(f'{path_save}/{model}').mkdir(parents=True, exist_ok=True)
 
     pl.io.write_image(fig, file=f'{path_save}/{model}/histogram_model.png',
                       width=1450, height=700, scale=2, engine='kaleido')
@@ -208,7 +210,7 @@ def draw_wells_model(df_cumerr_model, model):
     fig.update_yaxes(title_text="Относит. ошибка, %", row=1, col=1)
 
     if not Path(f'{path_save}/{model}').exists():
-        Path(f'{path_save}/{model}').mkdir()
+        Path(f'{path_save}/{model}').mkdir(parents=True, exist_ok=True)
 
     pl.io.write_image(fig, file=f'{path_save}/{model}/wells_model.png',
                       width=2050, height=700, scale=2, engine='kaleido')
@@ -321,7 +323,7 @@ dates = pd.date_range(date_test, date_end, freq='D').date
 path_read = pathlib.Path.cwd() / 'input_data' / oilfield
 path_save = pathlib.Path.cwd() / 'output' / oilfield
 if not Path(path_save).exists():
-    Path(path_save).mkdir()
+    Path(path_save).mkdir(parents=True, exist_ok=True)
 
 # Store dataframes of each model
 xlsx_files = path_read.glob('*.xlsx')
@@ -358,6 +360,11 @@ df_err_liq = {key: pd.DataFrame(data=0, index=dates, columns=['модель']) f
 
 df_err = {key: pd.DataFrame(data=0, index=dates, columns=['модель']) for key in dfs.keys()}
 
+# Daily model error
+df_err_model = {key: pd.DataFrame(index=dates) for key in dfs.keys()}
+# Cumulative model error
+df_cumerr_model = {key: pd.DataFrame(index=dates) for key in dfs.keys()}
+
 model_mean = dict.fromkeys(dfs.keys())
 model_std = dict.fromkeys(dfs.keys())
 model_mean_daily = dict.fromkeys(dfs.keys())
@@ -368,10 +375,8 @@ for name in well_names:
     create_well_plot(name, dfs, liq=True)
     create_well_plot(name, dfs, liq=False)
 
-for model in dfs.keys():
-    df_err_model = pd.DataFrame(index=dates)  # Daily error
-    df_cumerr_model = pd.DataFrame(index=dates)  # Cumulative error
 
+for model in dfs.keys():
     for name in well_names:
         # Check if current model has this well
         if f'{name}_oil' not in dfs[model].columns:
@@ -383,7 +388,7 @@ for model in dfs.keys():
         q_model_liq = dfs[model][f'{name}_liq']
         # q_rgd = df_perf['ргд'] * ratios[name]
 
-        df_err_model[f'{name}'] = np.abs(q_model - q_fact) / q_fact * 100
+        df_err_model[model][f'{name}'] = np.abs(q_model - q_fact) / q_fact * 100
         # df_err_rgd[f'{name}'] = np.abs(q_rgd - q_fact) / q_fact * 100
 
         # Cumulative q
@@ -391,7 +396,7 @@ for model in dfs.keys():
         Q_fact = q_fact.cumsum()
         # Q_rgd = q_rgd.cumsum()
 
-        df_cumerr_model[f'{name}'] = (Q_model - Q_fact) / Q_fact * 100
+        df_cumerr_model[model][f'{name}'] = (Q_model - Q_fact) / Q_fact * 100
         # df_cumerr_rgd[f'{name}'] = (Q_rgd - Q_fact) / Q_fact * 100
 
         df_perf[model]['факт'] += q_fact
@@ -399,29 +404,32 @@ for model in dfs.keys():
         df_perf_liq[model]['факт'] += q_fact_liq
         df_perf_liq[model]['модель'] += q_model_liq
 
+
+for model in dfs.keys():
     df_err[model]['модель'] = calc_relative_error(df_perf[model]['факт'], df_perf[model]['модель'])
     df_err_liq[model]['модель'] = calc_relative_error(df_perf_liq[model]['факт'], df_perf_liq[model]['модель'])
 
-    df_err['ргд'] = calc_relative_error(df_perf[model]['факт'], df_perf['ргд'])
+    if rgd_exists:
+        df_err['ргд'] = calc_relative_error(df_perf[model]['факт'], df_perf['ргд'])
 
-    model_mean[model] = df_cumerr_model.mean(axis=1)
-    model_std[model] = df_cumerr_model.std(axis=1)
+    model_mean[model] = df_cumerr_model[model].mean(axis=1)
+    model_std[model] = df_cumerr_model[model].std(axis=1)
 
     # rgd_mean = df_cumerr_rgd.mean(axis=1)
     # rgd_std = df_cumerr_rgd.std(axis=1)
 
-    model_mean_daily[model] = df_err_model.mean(axis=1)
-    model_std_daily[model] = df_err_model.std(axis=1)
+    model_mean_daily[model] = df_err_model[model].mean(axis=1)
+    model_std_daily[model] = df_err_model[model].std(axis=1)
 
     # rgd_mean_daily = df_err_rgd.mean(axis=1)
     # rgd_std_daily = df_err_rgd.std(axis=1)
 
-    draw_histogram_model(df_cumerr_model, model)
-    draw_wells_model(df_cumerr_model, model)
+    draw_histogram_model(df_cumerr_model[model], model)
+    draw_wells_model(df_cumerr_model[model], model)
 
 # %% Draw common statistics
 
-draw_performance(dfs, df_perf, df_err, liq=False, rgd_exists=True)
+draw_performance(dfs, df_perf, df_err, liq=False, rgd_exists=rgd_exists)
 draw_performance(dfs, df_perf_liq, df_err_liq, liq=True)
 
 draw_statistics(
