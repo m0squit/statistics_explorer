@@ -92,16 +92,16 @@ def create_well_plot(name: str, dfs: dict, liq=False) -> None:
     # TODO: сейчас факт берется по одной из моделей произвольно
     mode = 'liq' if liq else 'oil'
     for df in dfs.values():
-        if f'{name}_fact_{mode}' in df.columns:
-            trace = go.Scatter(name='факт', x=df.index, y=df[f'{name}_fact_{mode}'], mode=m, marker=mark)
+        if f'{name}_{mode}_true' in df.columns:
+            trace = go.Scatter(name='факт', x=df.index, y=df[f'{name}_{mode}_true'], mode=m, marker=mark)
             fig.add_trace(trace, row=1, col=1)
             break
 
     for ind, (model, df) in enumerate(dfs.items()):
-        if f'{name}_oil' in df.columns:
+        if f'{name}_{mode}_pred' in df.columns:
             clr = colors[ind]
-            relative_error = calc_relative_error(df[f'{name}_fact_{mode}'], df[f'{name}_{mode}'])
-            trace = go.Scatter(name=model, x=df.index, y=df[f'{name}_{mode}'],
+            relative_error = calc_relative_error(df[f'{name}_{mode}_true'], df[f'{name}_{mode}_pred'])
+            trace = go.Scatter(name=model, x=df.index, y=df[f'{name}_{mode}_pred'],
                                mode=ml, marker=mark, line=dict(width=1, color=clr))
             fig.add_trace(trace, row=1, col=1)
 
@@ -379,13 +379,13 @@ for name in well_names:
 for model in dfs.keys():
     for name in well_names:
         # Check if current model has this well
-        if f'{name}_oil' not in dfs[model].columns:
+        if f'{name}_oil_true' not in dfs[model].columns:
             continue
 
-        q_fact = dfs[model][f'{name}_fact_oil']
-        q_model = dfs[model][f'{name}_oil']
-        q_fact_liq = dfs[model][f'{name}_fact_liq']
-        q_model_liq = dfs[model][f'{name}_liq']
+        q_fact = dfs[model][f'{name}_oil_true']
+        q_model = dfs[model][f'{name}_oil_pred']
+        q_fact_liq = dfs[model][f'{name}_liq_true']
+        q_model_liq = dfs[model][f'{name}_liq_pred']
         # q_rgd = df_perf['ргд'] * ratios[name]
 
         df_err_model[model][f'{name}'] = np.abs(q_model - q_fact) / q_fact * 100
