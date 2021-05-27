@@ -37,13 +37,14 @@ from plotly.subplots import make_subplots
 oilfield = 'vyngayakhinskoe'
 date_test = datetime.date(2019, 4, 1)
 date_end = datetime.date(2019, 6, 30)
+ignore_wells = ['2860424700']
 # Settings for РГД
 read_columns = {
     0: 32,
     1: 34,
     2: 39,
 }
-skiprows = 11
+skiprows = 10
 
 
 # %% Defining methods
@@ -101,11 +102,13 @@ def create_well_plot(name: str, dfs: dict, liq=False) -> None:
     ml = 'markers+lines'
     colors = px.colors.qualitative.Safe
 
-    # TODO: сейчас факт берется по одной из моделей произвольно
+    # TODO: сейчас факт строится по всем моделям
     mode = 'liq' if liq else 'oil'
-    for df in dfs.values():
+    for ind, df in enumerate(dfs.values()):
+        clr = colors[ind]
         if f'{name}_{mode}_true' in df.columns:
-            trace = go.Scatter(name='факт', x=df.index, y=df[f'{name}_{mode}_true'], mode=m, marker=mark)
+            trace = go.Scatter(name='факт', x=df.index, y=df[f'{name}_{mode}_true'],
+                               mode=m, marker=mark, marker_color=clr)
             fig.add_trace(trace, row=1, col=1)
             break
 
@@ -249,19 +252,19 @@ def draw_performance(dfs, df_perf, df_err, liq=False, rgd_exists=False):
     ml = 'markers+lines'
     colors = px.colors.qualitative.Safe
 
-    # TODO: сейчас факт берется по одной из моделей произвольно\
-    for model in dfs.keys():
+    # TODO: сейчас факт строится по всем моделям
+    for ind, model in enumerate(dfs.keys()):
+        clr = colors[ind]
         x = df_perf[model].index
-        trace = go.Scatter(name=f'факт_{model}', x=x, y=df_perf[model]['факт'], mode=m, marker=mark)
+        trace = go.Scatter(name=f'факт_{model}', x=x, y=df_perf[model]['факт'], mode=m, marker=mark, marker_color=clr)
         fig.add_trace(trace, row=1, col=1)
 
     # Model errors
     for ind, model in enumerate(dfs.keys()):
         clr = colors[ind]
-
         trace1 = go.Scatter(name=model, x=x, y=df_perf[model]['модель'],
                             mode=ml, marker=mark, line=dict(width=1, color=clr))
-        trace2 = go.Scatter(name=f're_{model}', x=x, y=df_err[model]['модель'],
+        trace2 = go.Scatter(name=f'', x=x, y=df_err[model]['модель'],
                             mode=ml, marker=mark, line=dict(width=1, color=clr))
 
         fig.add_trace(trace1, row=1, col=1)
@@ -271,7 +274,7 @@ def draw_performance(dfs, df_perf, df_err, liq=False, rgd_exists=False):
         clr = colors[-2]
         trace1 = go.Scatter(name='РГД', x=x, y=df_perf['ргд'],
                             mode=ml, marker=mark, line=dict(width=1, color=clr))
-        trace2 = go.Scatter(name=f're_РГД', x=x, y=df_err['ргд'],
+        trace2 = go.Scatter(name=f'', x=x, y=df_err['ргд'],
                             mode=ml, marker=mark, line=dict(width=1, color=clr))
 
         fig.add_trace(trace1, row=1, col=1)
@@ -361,6 +364,7 @@ for df in dfs.values():
     columns.extend(df.columns[::4])
 well_names = [col.split('_')[0] for col in columns]
 well_names = list(dict.fromkeys(well_names))  # Remove duplicates
+well_names = [name for name in well_names if name not in ignore_wells]
 
 # %% Initialize data
 df_perf = {key: pd.DataFrame(data=0, index=dates, columns=['факт', 'модель']) for key in dfs.keys()}
