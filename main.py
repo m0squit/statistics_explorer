@@ -265,6 +265,7 @@ def draw_performance(dfs, df_perf, df_err, liq=False, rgd_exists=False):
         fig.add_trace(trace, row=1, col=1)
 
     # Model errors
+    x = None
     for ind, model in enumerate(dfs.keys()):
         clr = colors[ind]
         x = df_perf[model].index
@@ -278,7 +279,6 @@ def draw_performance(dfs, df_perf, df_err, liq=False, rgd_exists=False):
 
     if rgd_exists and not liq:
         clr = colors[-2]
-        x = df_perf['ргд'].index
         trace1 = go.Scatter(name='РГД', x=x, y=df_perf['ргд'],
                             mode=ml, marker=mark, line=dict(width=1, color=clr))
         trace2 = go.Scatter(name=f'', x=x, y=df_err['ргд'],
