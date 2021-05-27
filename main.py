@@ -11,21 +11,24 @@ from plotly.subplots import make_subplots
 
 # %% Config
 
-# oilfield = 'kraynee'
-# date_test = datetime.date(2019, 2, 1)
-# date_end = datetime.date(2019, 4, 30)
-# # Settings for РГД
-# read_columns = {
-#     0: 27,
-#     1: 32,
-#     2: 29,
-# }
-# skiprows = 11
+oilfield = 'kraynee'
+date_test = datetime.date(2019, 2, 1)
+date_end = datetime.date(2019, 4, 30)
+ignore_wells = []
+# Settings for РГД
+read_columns = {
+    0: 27,
+    1: 32,
+    2: 29,
+}
+skiprows = 11
+rhoo = 0.847
 
 
 # oilfield = 'valyntoyskoe'
 # date_test = datetime.date(2019, 3, 1)
 # date_end = datetime.date(2019, 5, 31)
+# ignore_wells = []
 # # Settings for РГД
 # read_columns = {
 #     0: 12,
@@ -33,18 +36,21 @@ from plotly.subplots import make_subplots
 #     2: 14,
 # }
 # skiprows = 10
+# rhoo = 0.794
 
-oilfield = 'vyngayakhinskoe'
-date_test = datetime.date(2019, 4, 1)
-date_end = datetime.date(2019, 6, 30)
-ignore_wells = ['2860424700']
-# Settings for РГД
-read_columns = {
-    0: 32,
-    1: 34,
-    2: 39,
-}
-skiprows = 10
+
+# oilfield = 'vyngayakhinskoe'
+# date_test = datetime.date(2019, 4, 1)
+# date_end = datetime.date(2019, 6, 30)
+# ignore_wells = ['2860424700']
+# # Settings for РГД
+# read_columns = {
+#     0: 32,
+#     1: 34,
+#     2: 39,
+# }
+# skiprows = 10
+# rhoo = 0.832
 
 
 # %% Defining methods
@@ -65,8 +71,8 @@ def read_RGD(cols, skiprows):
         s_sheet.dropna(inplace=True)
         prod = s_sheet.to_list()
         prod_rgd = np.append(prod_rgd, prod)
-    # TODO: now returns m3 with rhoo = 0.794
-    return prod_rgd / 0.794
+    # TODO: now returns m3 with variable rhoo
+    return prod_rgd / rhoo
 
 
 def convert_day_date(x: str) -> datetime.date:
@@ -110,7 +116,6 @@ def create_well_plot(name: str, dfs: dict, liq=False) -> None:
             trace = go.Scatter(name='факт', x=df.index, y=df[f'{name}_{mode}_true'],
                                mode=m, marker=mark, marker_color=clr)
             fig.add_trace(trace, row=1, col=1)
-            break
 
     for ind, (model, df) in enumerate(dfs.items()):
         if f'{name}_{mode}_pred' in df.columns:
