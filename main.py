@@ -9,19 +9,18 @@ from pathlib import Path
 
 from plotly.subplots import make_subplots
 
-
 # %% Config
 
-oilfield = 'kraynee'
-date_test = datetime.date(2019, 2, 1)
-date_end = datetime.date(2019, 4, 30)
-# Settings for РГД
-read_columns = {
-    0: 27,
-    1: 32,
-    2: 29,
-}
-skiprows = 11
+# oilfield = 'kraynee'
+# date_test = datetime.date(2019, 2, 1)
+# date_end = datetime.date(2019, 4, 30)
+# # Settings for РГД
+# read_columns = {
+#     0: 27,
+#     1: 32,
+#     2: 29,
+# }
+# skiprows = 11
 
 
 # oilfield = 'valyntoyskoe'
@@ -35,11 +34,22 @@ skiprows = 11
 # }
 # skiprows = 10
 
+oilfield = 'vyngayakhinskoe'
+date_test = datetime.date(2019, 4, 1)
+date_end = datetime.date(2019, 6, 30)
+# Settings for РГД
+read_columns = {
+    0: 32,
+    1: 34,
+    2: 39,
+}
+skiprows = 11
+
 
 # %% Defining methods
 
 def read_RGD(cols, skiprows):
-    prod_rgd = list()
+    prod_rgd = np.array([])
     for sheet in [0, 1, 2]:
         s_sheet = pd.read_excel(
             io=path_read / 'ргд.xlsx',
@@ -53,8 +63,9 @@ def read_RGD(cols, skiprows):
         s_sheet = s_sheet.loc[:idx]
         s_sheet.dropna(inplace=True)
         prod = s_sheet.to_list()
-        prod_rgd.extend(prod)
-    return prod_rgd
+        prod_rgd = np.append(prod_rgd, prod)
+    # TODO: now returns m3 with rhoo = 0.794
+    return prod_rgd / 0.794
 
 
 def convert_day_date(x: str) -> datetime.date:
@@ -62,9 +73,10 @@ def convert_day_date(x: str) -> datetime.date:
 
 
 def calc_relative_error(y_true: pd.Series, y_pred: pd.Series) -> pd.Series:
-    diff = np.abs(y_pred - y_true)
-    err = diff.div(y_true)
-    err.replace(np.inf, np.nan)
+    # diff = np.abs(y_pred - y_true)
+    # err = diff.div(y_true)
+    # err.replace(np.inf, np.nan)
+    err = np.abs(y_pred - y_true) / np.maximum(y_pred, y_true)
     return err * 100
 
 
@@ -100,19 +112,19 @@ def create_well_plot(name: str, dfs: dict, liq=False) -> None:
     for ind, (model, df) in enumerate(dfs.items()):
         if f'{name}_{mode}_pred' in df.columns:
             clr = colors[ind]
-            relative_error = calc_relative_error(df[f'{name}_{mode}_true'], df[f'{name}_{mode}_pred'])
             trace = go.Scatter(name=model, x=df.index, y=df[f'{name}_{mode}_pred'],
                                mode=ml, marker=mark, line=dict(width=1, color=clr))
             fig.add_trace(trace, row=1, col=1)
 
+            relative_error = calc_relative_error(df[f'{name}_{mode}_true'], df[f'{name}_{mode}_pred'])
             trace = go.Scatter(name=f're_{model}', x=df.index, y=relative_error,
                                mode=ml, marker=mark, line=dict(width=1, color=clr))
             fig.add_trace(trace, row=2, col=1)
 
-    if not Path(f'{path_save}/well plots/{mode}').exists():
-        Path(f'{path_save}/well plots/{mode}').mkdir(parents=True, exist_ok=True)
+    if not Path(f'{path_save}/__well plots__/{mode}').exists():
+        Path(f'{path_save}/__well plots__/{mode}').mkdir(parents=True, exist_ok=True)
 
-    pl.io.write_image(fig, file=f'{path_save}/well plots/{mode}/{name}.png',
+    pl.io.write_image(fig, file=f'{path_save}/__well plots__/{mode}/{name}.png',
                       width=1450, height=700, scale=2, engine='kaleido')
 
 
@@ -225,7 +237,7 @@ def draw_performance(dfs, df_perf, df_err, liq=False, rgd_exists=False):
         cols=1,
         shared_xaxes=True,
         vertical_spacing=0.05,
-        subplot_titles=[f'Суммарная суточная добыча {mode}, т', 'Относительное отклонение от факта, д. ед.'],
+        subplot_titles=[f'Суммарная суточная добыча {mode}, м3', 'Относительное отклонение от факта, %'],
     )
     fig.layout.template = 'seaborn'
 
@@ -237,11 +249,11 @@ def draw_performance(dfs, df_perf, df_err, liq=False, rgd_exists=False):
     ml = 'markers+lines'
     colors = px.colors.qualitative.Safe
 
-    # TODO: сейчас факт берется по одной из моделей произвольно
-    model = list(dfs.keys())[0]
-    x = df_perf[model].index
-    trace = go.Scatter(name='факт', x=x, y=df_perf[model]['факт'], mode=m, marker=mark)
-    fig.add_trace(trace, row=1, col=1)
+    # TODO: сейчас факт берется по одной из моделей произвольно\
+    for model in dfs.keys():
+        x = df_perf[model].index
+        trace = go.Scatter(name=f'факт_{model}', x=x, y=df_perf[model]['факт'], mode=m, marker=mark)
+        fig.add_trace(trace, row=1, col=1)
 
     # Model errors
     for ind, model in enumerate(dfs.keys()):
@@ -256,7 +268,7 @@ def draw_performance(dfs, df_perf, df_err, liq=False, rgd_exists=False):
         fig.add_trace(trace2, row=2, col=1)
 
     if rgd_exists and not liq:
-        clr = colors[-1]
+        clr = colors[-2]
         trace1 = go.Scatter(name='РГД', x=x, y=df_perf['ргд'],
                             mode=ml, marker=mark, line=dict(width=1, color=clr))
         trace2 = go.Scatter(name=f're_РГД', x=x, y=df_err['ргд'],
@@ -267,6 +279,7 @@ def draw_performance(dfs, df_perf, df_err, liq=False, rgd_exists=False):
 
     pl.io.write_image(fig, file=f'{path_save}/performance_{mode}.png',
                       width=1450, height=700, scale=2, engine='kaleido')
+    fig.write_html(f'{path_save}/performance_{mode}.html')
 
 
 def draw_statistics(
@@ -343,10 +356,11 @@ for df in dfs.values():
     df.rename(columns={f'{df.columns[0]}': 'date'}, inplace=True)
     df.date = df.date.apply(lambda x: x.date())
     df.set_index('date', inplace=True)
+    df[df <= 0] = np.nan
     df = df.reindex(dates)
     columns.extend(df.columns[::4])
-columns = list(dict.fromkeys(columns))  # Remove duplicates
 well_names = [col.split('_')[0] for col in columns]
+well_names = list(dict.fromkeys(well_names))  # Remove duplicates
 
 # %% Initialize data
 df_perf = {key: pd.DataFrame(data=0, index=dates, columns=['факт', 'модель']) for key in dfs.keys()}
@@ -371,10 +385,15 @@ model_mean_daily = dict.fromkeys(dfs.keys())
 model_std_daily = dict.fromkeys(dfs.keys())
 
 # %% Calculations
+print(f'Oilfield: {oilfield}')
+print(f'Total number of different wells: {len(well_names)}')
+
+for model, df in dfs.items():
+    print(f'{model} number of wells: {df.shape[1] // 4}')
+
 for name in well_names:
     create_well_plot(name, dfs, liq=True)
     create_well_plot(name, dfs, liq=False)
-
 
 for model in dfs.keys():
     for name in well_names:
@@ -388,7 +407,7 @@ for model in dfs.keys():
         q_model_liq = dfs[model][f'{name}_liq_pred']
         # q_rgd = df_perf['ргд'] * ratios[name]
 
-        df_err_model[model][f'{name}'] = np.abs(q_model - q_fact) / q_fact * 100
+        df_err_model[model][f'{name}'] = np.abs(q_model - q_fact) / np.maximum(q_model, q_fact) * 100
         # df_err_rgd[f'{name}'] = np.abs(q_rgd - q_fact) / q_fact * 100
 
         # Cumulative q
@@ -396,14 +415,13 @@ for model in dfs.keys():
         Q_fact = q_fact.cumsum()
         # Q_rgd = q_rgd.cumsum()
 
-        df_cumerr_model[model][f'{name}'] = (Q_model - Q_fact) / Q_fact * 100
+        df_cumerr_model[model][f'{name}'] = (Q_model - Q_fact) / np.maximum(Q_model, Q_fact) * 100
         # df_cumerr_rgd[f'{name}'] = (Q_rgd - Q_fact) / Q_fact * 100
 
-        df_perf[model]['факт'] += q_fact
-        df_perf[model]['модель'] += q_model
-        df_perf_liq[model]['факт'] += q_fact_liq
-        df_perf_liq[model]['модель'] += q_model_liq
-
+        df_perf[model]['факт'] += q_fact.fillna(0)
+        df_perf[model]['модель'] += q_model.fillna(0)
+        df_perf_liq[model]['факт'] += q_fact_liq.fillna(0)
+        df_perf_liq[model]['модель'] += q_model_liq.fillna(0)
 
 for model in dfs.keys():
     df_err[model]['модель'] = calc_relative_error(df_perf[model]['факт'], df_perf[model]['модель'])
