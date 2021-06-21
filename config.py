@@ -18,34 +18,34 @@ from pathlib import Path
 # rhoo = 0.847
 
 
-oilfield = 'valyntoyskoe'
-date_test = datetime.date(2019, 3, 1)
-date_end = datetime.date(2019, 5, 31)
-bin_size = 20
-ignore_wells = []
-# Settings for РГД
-read_columns = {
-    0: 12,
-    1: 16,
-    2: 14,
-}
-skiprows = 10
-rhoo = 0.794
-
-
-# oilfield = 'vyngayakhinskoe'
-# date_test = datetime.date(2019, 4, 1)
-# date_end = datetime.date(2019, 6, 30)
-# bin_size = 10
-# ignore_wells = ['2860424700']
+# oilfield = 'valyntoyskoe'
+# date_test = datetime.date(2019, 3, 1)
+# date_end = datetime.date(2019, 5, 31)
+# bin_size = 20
+# ignore_wells = []
 # # Settings for РГД
 # read_columns = {
-#     0: 32,
-#     1: 34,
-#     2: 39,
+#     0: 12,
+#     1: 16,
+#     2: 14,
 # }
 # skiprows = 10
-# rhoo = 0.832
+# rhoo = 0.794
+
+
+oilfield = 'vyngayakhinskoe'
+date_test = datetime.date(2019, 4, 1)
+date_end = datetime.date(2019, 6, 30)
+bin_size = 10
+ignore_wells = ['2860424700']
+# Settings for РГД
+read_columns = {
+    0: 32,
+    1: 34,
+    2: 39,
+}
+skiprows = 10
+rhoo = 0.832
 
 
 # %%
