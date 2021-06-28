@@ -31,7 +31,10 @@ def create_well_plot(name: str,
     )
     fig.layout.template = 'seaborn'
     fig.update_layout(
-        title_text=f'Скважина "{name}"; {oilfield};'
+        title_text=f'Скважина "{name}"; {oilfield};',
+        legend=dict(orientation="h",
+                    font=dict(size=15)
+                    ),
     )
 
     mark = dict(size=4)
@@ -54,7 +57,8 @@ def create_well_plot(name: str,
 
             relative_error = calc_relative_error(df[f'{name}_{mode}_true'], df[f'{name}_{mode}_pred'])
             trace = go.Scatter(name=f're_{model}', x=df.index, y=relative_error,
-                               mode=ml, marker=mark, line=dict(width=1, color=clr))
+                               mode=ml, marker=mark, line=dict(width=1, color=clr),
+                               showlegend=False)
             fig.add_trace(trace, row=2, col=1)
 
     if not Path(f'{path_save}/__well plots__/{mode}').exists():
@@ -84,6 +88,8 @@ def draw_histogram_model(df_cumerr_model: pd.DataFrame,
         title_text=f'Месторождение {oilfield};'
                    f' Распределение ошибки по накопленной добыче нефти',
         bargap=0.005,
+        font=dict(size=15),
+        showlegend=False,
     )
 
     days = [29, 59, -1]
@@ -102,10 +108,14 @@ def draw_histogram_model(df_cumerr_model: pd.DataFrame,
             col=1,
         )
 
-        fig.update_xaxes(dtick=bin_size, row=ind, col=1)
-        fig.update_yaxes(title_text="Число скважин", row=ind, col=1)
+        fig.update_xaxes(dtick=bin_size, row=ind + 1, col=1)
+        fig.update_yaxes(title_text="Число скважин", title_font_size=15, row=ind + 1, col=1)
 
-    fig.update_xaxes(title_text="Относительная ошибка по накопленной добыче нефти, %", row=3, col=1)
+    fig.update_xaxes(title_text="Относительная ошибка по накопленной добыче нефти, %",
+                     title_font_size=16,
+                     dtick=bin_size,
+                     row=3, col=1)
+    # fig.update_yaxes(title_text="Число скважин", title_font_size=15, row=3, col=1)
 
     if not Path(f'{path_save}/{model}').exists():
         Path(f'{path_save}/{model}').mkdir(parents=True, exist_ok=True)
@@ -150,12 +160,20 @@ def draw_performance(dfs: dict,
         cols=1,
         shared_xaxes=True,
         vertical_spacing=0.05,
-        subplot_titles=[f'Суммарная суточная добыча {mode}, м3', 'Относительное отклонение от факта, %'],
+        subplot_titles=[f'Суммарная суточная добыча {mode}, м3',
+                        'Относительное отклонение от факта, %'],
     )
     fig.layout.template = 'seaborn'
 
     text = f'Месторождение {oilfield}'
-    fig.update_layout(title=dict(text=text, x=0.05, xanchor='left'), font=dict(size=10))
+    fig.update_layout(
+        title=dict(text=text, x=0.05, xanchor='left'),
+        font=dict(size=10),
+        legend=dict(
+            orientation="h",
+            font=dict(size=15)
+        )
+    )
 
     mark = dict(size=4)
     m = 'markers'
@@ -178,7 +196,8 @@ def draw_performance(dfs: dict,
         trace1 = go.Scatter(name=model, x=x, y=df_perf[model]['модель'],
                             mode=ml, marker=mark, line=dict(width=1, color=clr))
         trace2 = go.Scatter(name=f'', x=x, y=df_err[model]['модель'],
-                            mode=ml, marker=mark, line=dict(width=1, color=clr))
+                            mode=ml, marker=mark, line=dict(width=1, color=clr),
+                            showlegend=False)
 
         fig.add_trace(trace1, row=1, col=1)
         fig.add_trace(trace2, row=2, col=1)
@@ -188,7 +207,8 @@ def draw_performance(dfs: dict,
         trace1 = go.Scatter(name='РГД', x=x, y=df_perf['ргд'],
                             mode=ml, marker=mark, line=dict(width=1, color=clr))
         trace2 = go.Scatter(name=f'', x=x, y=df_err['ргд'],
-                            mode=ml, marker=mark, line=dict(width=1, color=clr))
+                            mode=ml, marker=mark, line=dict(width=1, color=clr),
+                            showlegend=False)
 
         fig.add_trace(trace1, row=1, col=1)
         fig.add_trace(trace2, row=2, col=1)
