@@ -74,8 +74,10 @@ df_err = {key: pd.DataFrame(data=0, index=dates, columns=['модель']) for k
 
 # Daily model error
 df_err_model = {key: pd.DataFrame(index=dates) for key in models}
+df_err_model_liq = {key: pd.DataFrame(index=dates) for key in models}
 # Cumulative model error
 df_cumerr_model = {key: pd.DataFrame(index=dates) for key in models}
+df_cumerr_model_liq = {key: pd.DataFrame(index=dates) for key in models}
 
 model_mean = dict.fromkeys(models)
 model_std = dict.fromkeys(models)
@@ -104,11 +106,16 @@ for model in models:
         q_fact_liq = dfs[model][f'{name}_liq_true']
         q_model_liq = dfs[model][f'{name}_liq_pred']
         df_err_model[model][f'{name}'] = np.abs(q_model - q_fact) / np.maximum(q_model, q_fact) * 100
+        df_err_model_liq[model][f'{name}'] = np.abs(q_model_liq - q_fact_liq) / np.maximum(q_model_liq, q_fact_liq)*100
 
         # Cumulative q
         Q_model = q_model.cumsum()
         Q_fact = q_fact.cumsum()
         df_cumerr_model[model][f'{name}'] = (Q_model - Q_fact) / np.maximum(Q_model, Q_fact) * 100
+
+        Q_model_liq = q_model_liq.cumsum()
+        Q_fact_liq = q_fact_liq.cumsum()
+        df_cumerr_model_liq[model][f'{name}'] = (Q_model_liq - Q_fact_liq) / np.maximum(Q_model_liq, Q_fact_liq) * 100
 
         df_perf[model]['факт'] += q_fact.fillna(0)
         df_perf[model]['модель'] += q_model.fillna(0)
@@ -125,10 +132,14 @@ for model in models:
     model_mean[model] = df_cumerr_model[model].mean(axis=1)
     model_std[model] = df_cumerr_model[model].std(axis=1)
 
+    model_mean_liq = df_cumerr_model_liq[model].mean(axis=1)
+    model_std_liq = df_cumerr_model_liq[model].std(axis=1)
+
     model_mean_daily[model] = df_err_model[model].mean(axis=1)
     model_std_daily[model] = df_err_model[model].std(axis=1)
 
-    draw_histogram_model(df_cumerr_model[model], model, bin_size)
+    # TODO: сейчас строится для жидкости. Если надо для нефти, то убрать "_liq"
+    draw_histogram_model(df_err_model_liq[model], model, bin_size)
     draw_wells_model(df_err_model[model], model)
 
 # %% Draw common statistics

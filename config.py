@@ -3,19 +3,19 @@ import pandas as pd
 from pathlib import Path
 
 
-# oilfield = 'kraynee'
-# date_test = datetime.date(2019, 2, 1)
-# date_end = datetime.date(2019, 4, 30)
-# ignore_wells = []
-# bin_size = 10
-# # Settings for РГД
-# read_columns = {
-#     0: 27,
-#     1: 32,
-#     2: 29,
-# }
-# skiprows = 11
-# rhoo = 0.847
+oilfield = 'Крайнее'
+date_test = datetime.date(2019, 2, 1)
+date_end = datetime.date(2019, 4, 30)
+ignore_wells = []
+bin_size = 10
+# Settings for РГД
+read_columns = {
+    0: 27,
+    1: 32,
+    2: 29,
+}
+skiprows = 11
+rhoo = 0.847
 
 
 # oilfield = 'valyntoyskoe'
@@ -33,19 +33,19 @@ from pathlib import Path
 # rhoo = 0.794
 
 
-oilfield = 'vyngayakhinskoe'
-date_test = datetime.date(2019, 4, 1)
-date_end = datetime.date(2019, 6, 30)
-bin_size = 10
-ignore_wells = ['2860424700']
-# Settings for РГД
-read_columns = {
-    0: 32,
-    1: 34,
-    2: 39,
-}
-skiprows = 10
-rhoo = 0.832
+# oilfield = 'vyngayakhinskoe'
+# date_test = datetime.date(2019, 4, 1)
+# date_end = datetime.date(2019, 6, 30)
+# bin_size = 10
+# ignore_wells = ['2860424700']
+# # Settings for РГД
+# read_columns = {
+#     0: 32,
+#     1: 34,
+#     2: 39,
+# }
+# skiprows = 10
+# rhoo = 0.832
 
 
 # %%
