@@ -254,12 +254,15 @@ def draw_statistics(
         clr = colors[ind]
         trace1 = go.Scatter(name=model, x=dates, y=model_mean[model], mode=ml,
                             marker=mark, line=dict(width=1, color=clr))
-        trace2 = go.Scatter(name='', x=dates, y=model_std[model], mode=ml,
-                            marker=mark, line=dict(width=1, color=clr))
-        trace3 = go.Scatter(name=f'', x=dates, y=model_mean_daily[model],
-                            mode=ml, marker=mark, line=dict(width=1, color=clr))
-        trace4 = go.Scatter(name=f'', x=dates, y=model_std_daily[model],
-                            mode=ml, marker=mark, line=dict(width=1, color=clr))
+        trace2 = go.Scatter(x=dates, y=model_std[model], mode=ml,
+                            marker=mark, line=dict(width=1, color=clr),
+                            showlegend=False)
+        trace3 = go.Scatter(x=dates, y=model_mean_daily[model],
+                            mode=ml, marker=mark, line=dict(width=1, color=clr),
+                            showlegend=False)
+        trace4 = go.Scatter(x=dates, y=model_std_daily[model],
+                            mode=ml, marker=mark, line=dict(width=1, color=clr),
+                            showlegend=False)
 
         fig.add_trace(trace1, row=1, col=1)
         fig.add_trace(trace2, row=2, col=1)
