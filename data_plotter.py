@@ -31,6 +31,7 @@ def create_well_plot(name: str,
     )
     fig.layout.template = 'seaborn'
     fig.update_layout(
+        font=dict(size=15),
         title_text=f'Скважина "{name}"; {oilfield};',
         legend=dict(orientation="h",
                     font=dict(size=15)
@@ -69,37 +70,40 @@ def create_well_plot(name: str,
                       width=1450, height=700, scale=2, engine='kaleido')
 
 
-def draw_histogram_model(df_cumerr_model: pd.DataFrame,
+def draw_histogram_model(df_err: pd.DataFrame,
                          model: str,
                          bin_size: int):
+    length = len(df_err)
+    days = [length // 3, 2 * length // 3, -1]
+
     fig = make_subplots(
         rows=3,
         cols=1,
         shared_xaxes=True,
         vertical_spacing=0.07,
         subplot_titles=[
-            '30-е сутки',
-            '60-е сутки',
-            'Последние сутки',
+            f'За {days[0]} суток',
+            f'За {days[1]} суток',
+            f'За весь период прогноза',
         ],
     )
     fig.layout.template = 'seaborn'
+    # TODO: по добыче {чего}
     fig.update_layout(
-        title_text=f'Месторождение {oilfield};'
-                   f' Распределение ошибки по накопленной добыче нефти',
+        title_text=f'Распределение средней ошибки за n дней по добыче жидкости'
+                   f'; {oilfield}; Скважин: {len(df_err)}',
         bargap=0.005,
         font=dict(size=15),
         showlegend=False,
     )
 
-    days = [29, 59, -1]
-
     for ind, day in enumerate(days):
-        x = df_cumerr_model.iloc[day].dropna()
+        x = df_err.iloc[:day].mean()
         fig.add_trace(
             go.Histogram(
                 x=x,
                 opacity=0.9,
+                histnorm='percent',
                 xbins=dict(
                     size=bin_size,
                 ),
@@ -109,13 +113,12 @@ def draw_histogram_model(df_cumerr_model: pd.DataFrame,
         )
 
         fig.update_xaxes(dtick=bin_size, row=ind + 1, col=1)
-        fig.update_yaxes(title_text="Число скважин", title_font_size=15, row=ind + 1, col=1)
+        fig.update_yaxes(title_text="Процент скважин", title_font_size=15, row=ind + 1, col=1)
 
-    fig.update_xaxes(title_text="Относительная ошибка по накопленной добыче нефти, %",
+    fig.update_xaxes(title_text="Усредненная относительная ошибка по добыче нефти, %",
                      title_font_size=16,
                      dtick=bin_size,
                      row=3, col=1)
-    # fig.update_yaxes(title_text="Число скважин", title_font_size=15, row=3, col=1)
 
     if not Path(f'{path_save}/{model}').exists():
         Path(f'{path_save}/{model}').mkdir(parents=True, exist_ok=True)
