@@ -191,7 +191,7 @@ def draw_histogram_model(df_err: pd.DataFrame,
         rows=3,
         cols=1,
         shared_xaxes=True,
-        vertical_spacing=0.1,
+        vertical_spacing=0.05,
         subplot_titles=[
             f'За {days[0]} суток',
             f'За {days[1]} суток',
@@ -201,8 +201,7 @@ def draw_histogram_model(df_err: pd.DataFrame,
     fig.layout.template = 'seaborn'
     # TODO: по добыче {чего}
     fig.update_layout(
-        title_text=f'Распределение средней ошибки за n дней по добыче нефти'
-                   f'; {oilfield}; Скважин: {df_err.shape[1]}',
+        title_text=f'Распределение средней ошибки за n дней по добыче нефти<br>',
         bargap=0.005,
         font=dict(size=15),
         showlegend=False,
@@ -215,9 +214,8 @@ def draw_histogram_model(df_err: pd.DataFrame,
                 x=x,
                 opacity=0.9,
                 # histnorm='percent',
-                xbins=dict(
-                    size=bin_size,
-                ),
+                xbins=dict(size=bin_size),
+                # nbinsx=8,
             ),
             row=ind + 1,
             col=1,
@@ -226,11 +224,17 @@ def draw_histogram_model(df_err: pd.DataFrame,
         fig.update_xaxes(dtick=bin_size, row=ind + 1, col=1)
         fig.update_yaxes(title_text="Скважин", title_font_size=15, row=ind + 1, col=1)
 
-    fig.update_xaxes(title_text="Усредненная относительная ошибка по добыче нефти, %",
-                     title_font_size=16,
-                     dtick=bin_size,
-                     row=3, col=1)
-
+    err_all = df_err.mean()
+    fig.update_xaxes(
+        title_text=f"Усредненная относительная ошибка по добыче нефти, %<br><br>"
+                   f"<i>Среднее значение ошибки за весь период: <em>{err_all.mean():.2f}</i></em><br>"
+                   f"<i>Стандартное отклонение ошибки за весь период: <em>{err_all.std():.2f}</i></em><br>"
+                   f"Месторождение: <em>{oilfield}</em>. Количество скважин: <em>{df_err.shape[1]}</em>",
+        title_font_size=16,
+        dtick=bin_size,
+        row=3,
+        col=1
+    )
     return fig
 
 
@@ -238,19 +242,22 @@ def draw_wells_model(df_err_model: pd.DataFrame):
     fig = make_subplots(
         rows=1,
         cols=1,
-        vertical_spacing=0.05,
-        subplot_titles=['Средняя относит. ошибка по добыче нефти на периоде прогноза, %']
     )
     fig.layout.template = 'seaborn'
+    fig.update_layout(
+        title_text=f'Средняя относит. ошибка по добыче ЧЕГО на периоде прогноза, %',
+        # bargap=0.005,
+        font=dict(size=15),
+    )
 
     mean_err = df_err_model.mean(axis=0)
     mean_err = mean_err.sort_values()
     trace = go.Bar(x=mean_err.index, y=mean_err)
     fig.add_trace(trace, row=1, col=1)
 
-    fig.update_xaxes(title_text="Номер скважины", row=1, col=1)
+    fig.update_xaxes(title_text=f"Номер скважины<br><br>"
+                                f"<i>Среднее значение ошибки: <em>{mean_err.mean():.2f}</em></i>", row=1, col=1)
     fig.update_yaxes(title_text="Относит. ошибка, %", row=1, col=1)
-
     return fig
 
 

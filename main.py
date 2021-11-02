@@ -62,8 +62,8 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
             q_model = dfs[model][f'{_well_name}_oil_pred']
             q_fact_liq = dfs[model][f'{_well_name}_liq_true']
             q_model_liq = dfs[model][f'{_well_name}_liq_pred']
-            df_err_model[model][f'{_well_name}'] = calc_relative_error(q_fact, q_model)
-            df_err_model_liq[model][f'{_well_name}'] = calc_relative_error(q_fact_liq, q_model_liq)
+            df_err_model[model][f'{_well_name}'] = calc_relative_error(q_fact, q_model, use_abs=False)
+            df_err_model_liq[model][f'{_well_name}'] = calc_relative_error(q_fact_liq, q_model_liq, use_abs=False)
 
             Q_model = q_model.cumsum()
             Q_fact = q_fact.cumsum()

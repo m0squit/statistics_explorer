@@ -11,6 +11,7 @@ class ConfigStatistics:
         'ensemble': 'Ансамбль',
         'Ансамбль': 'Ансамбль',
         'CRM': 'CRM',
+        'CRM_ML': 'CRM',
         'true': 'Факт',
         'Ela_Xgb': 'Ela_Xgb',
         'Xgb_SVR': 'Xgb_SVR',
