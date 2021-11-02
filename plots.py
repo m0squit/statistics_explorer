@@ -199,9 +199,8 @@ def draw_histogram_model(df_err: pd.DataFrame,
         ],
     )
     fig.layout.template = 'seaborn'
-    # TODO: по добыче {чего}
     fig.update_layout(
-        title_text=f'Распределение средней ошибки за n дней по добыче нефти<br>',
+        title_text=f'Распределение средней ошибки за n дней',
         bargap=0.005,
         font=dict(size=15),
         showlegend=False,
@@ -226,12 +225,11 @@ def draw_histogram_model(df_err: pd.DataFrame,
 
     err_all = df_err.mean()
     fig.update_xaxes(
-        title_text=f"Усредненная относительная ошибка по добыче нефти, %<br><br>"
+        title_text=f"Усредненная относительная ошибка, %<br><br>"
                    f"<i>Среднее значение ошибки за весь период: <em>{err_all.mean():.2f}</i></em><br>"
                    f"<i>Стандартное отклонение ошибки за весь период: <em>{err_all.std():.2f}</i></em><br>"
                    f"Месторождение: <em>{oilfield}</em>. Количество скважин: <em>{df_err.shape[1]}</em>",
         title_font_size=16,
-        dtick=bin_size,
         row=3,
         col=1
     )
@@ -245,7 +243,7 @@ def draw_wells_model(df_err_model: pd.DataFrame):
     )
     fig.layout.template = 'seaborn'
     fig.update_layout(
-        title_text=f'Средняя относит. ошибка по добыче ЧЕГО на периоде прогноза, %',
+        title_text=f'Средняя относит. ошибка на периоде прогноза, %',
         # bargap=0.005,
         font=dict(size=15),
     )
@@ -304,6 +302,7 @@ def draw_performance(dfs: dict,
                            mode=m, marker=mark, marker_color=clr)
         fig.add_trace(trace, row=1, col=1)
 
+    annotation_text = ''
     # Model errors
     for ind, model in enumerate(dfs.keys()):
         clr = colors[ind]
@@ -312,10 +311,17 @@ def draw_performance(dfs: dict,
                             mode=ml, marker=mark, line=dict(width=1, color=clr))
         trace2 = go.Scatter(name=f'ERR: {MODEL_NAMES[model]}', x=x, y=df_err[model]['модель'],
                             mode=ml, marker=mark, line=dict(width=1, color=clr))
-
+        annotation_text += f'<i>Среднее значение ошибки <em>{MODEL_NAMES[model]}</em>: ' \
+                           f'{df_err[model]["модель"].mean():.2f}</i><br>'
         fig.add_trace(trace1, row=1, col=1)
         fig.add_trace(trace2, row=2, col=1)
 
+    fig.update_xaxes(
+        title_text=annotation_text,
+        title_font_size=16,
+        row=2,
+        col=1
+    )
     return fig
 
 
@@ -343,7 +349,7 @@ def draw_statistics(
     )
     fig.layout.template = 'seaborn'
 
-    text = f'Месторождение {oilfield} ; Добыча нефти, т'
+    text = f'Месторождение <em>{oilfield}</em>'
     fig.update_layout(title=dict(text=text, x=0.05, xanchor='left'), font=dict(size=10))
 
     mark = dict(size=4)

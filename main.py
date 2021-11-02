@@ -32,8 +32,8 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
     models = list(dfs.keys())
     df_perf = {key: pd.DataFrame(data=0, index=config.dates, columns=['факт', 'модель']) for key in models}
     df_perf_liq = {key: pd.DataFrame(data=0, index=config.dates, columns=['факт', 'модель']) for key in models}
-    df_err_liq = {key: pd.DataFrame(data=0, index=config.dates, columns=['модель']) for key in models}
     df_err = {key: pd.DataFrame(data=0, index=config.dates, columns=['модель']) for key in models}
+    df_err_liq = {key: pd.DataFrame(data=0, index=config.dates, columns=['модель']) for key in models}
     # Daily model error
     df_err_model = {key: pd.DataFrame(index=config.dates) for key in models}
     df_err_model_liq = {key: pd.DataFrame(index=config.dates) for key in models}
@@ -43,8 +43,12 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
 
     model_mean = dict.fromkeys(models)
     model_std = dict.fromkeys(models)
+    model_mean_liq = dict.fromkeys(models)
+    model_std_liq = dict.fromkeys(models)
     model_mean_daily = dict.fromkeys(models)
     model_std_daily = dict.fromkeys(models)
+    model_mean_daily_liq = dict.fromkeys(models)
+    model_std_daily_liq = dict.fromkeys(models)
 
     # Calculations
     print(f'Месторождение: {config.oilfield}')
@@ -62,15 +66,15 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
             q_model = dfs[model][f'{_well_name}_oil_pred']
             q_fact_liq = dfs[model][f'{_well_name}_liq_true']
             q_model_liq = dfs[model][f'{_well_name}_liq_pred']
-            df_err_model[model][f'{_well_name}'] = calc_relative_error(q_fact, q_model, use_abs=False)
-            df_err_model_liq[model][f'{_well_name}'] = calc_relative_error(q_fact_liq, q_model_liq, use_abs=False)
+            df_err_model[model][f'{_well_name}'] = calc_relative_error(q_fact, q_model, use_abs=config.use_abs)
+            df_err_model_liq[model][f'{_well_name}'] = calc_relative_error(q_fact_liq, q_model_liq, use_abs=config.use_abs)
 
             Q_model = q_model.cumsum()
             Q_fact = q_fact.cumsum()
-            df_cumerr_model[model][f'{_well_name}'] = calc_relative_error(Q_fact, Q_model, use_abs=False)
+            df_cumerr_model[model][f'{_well_name}'] = calc_relative_error(Q_fact, Q_model, use_abs=config.use_abs)
             Q_model_liq = q_model_liq.cumsum()
             Q_fact_liq = q_fact_liq.cumsum()
-            df_cumerr_model_liq[model][f'{_well_name}'] = calc_relative_error(Q_fact_liq, Q_model_liq, use_abs=False)
+            df_cumerr_model_liq[model][f'{_well_name}'] = calc_relative_error(Q_fact_liq, Q_model_liq, use_abs=config.use_abs)
 
             df_perf[model]['факт'] += q_fact.fillna(0)
             df_perf[model]['модель'] += q_model.fillna(0)
@@ -84,20 +88,30 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
         model_mean[model] = df_cumerr_model[model].mean(axis=1)
         model_std[model] = df_cumerr_model[model].std(axis=1)
 
-        # model_mean_liq = df_cumerr_model_liq[model].mean(axis=1)
-        # model_std_liq = df_cumerr_model_liq[model].std(axis=1)
+        model_mean_liq[model] = df_cumerr_model_liq[model].mean(axis=1)
+        model_std_liq[model] = df_cumerr_model_liq[model].std(axis=1)
 
         model_mean_daily[model] = df_err_model[model].mean(axis=1)
         model_std_daily[model] = df_err_model[model].std(axis=1)
 
-        # TODO: строится для жидкости/нефти. Если надо для жидкости, то подать "df_err_model_liq"
-        temp_name = f'Распределение ошибки "{config.MODEL_NAMES[model]}"'
+        model_mean_daily_liq[model] = df_err_model_liq[model].mean(axis=1)
+        model_std_daily_liq[model] = df_err_model_liq[model].std(axis=1)
+
+        temp_name = f'Распределение ошибки (нефть) "{config.MODEL_NAMES[model]}"'
         analytics_plots[temp_name] = draw_histogram_model(df_err_model[model],
                                                           config.bin_size,
                                                           config.oilfield
                                                           )
-        temp_name = f'Ошибка прогноза "{config.MODEL_NAMES[model]}"'
+        temp_name = f'Ошибка прогноза (нефть) "{config.MODEL_NAMES[model]}"'
         analytics_plots[temp_name] = draw_wells_model(df_err_model[model])
+
+        temp_name = f'Распределение ошибки (жидкость) "{config.MODEL_NAMES[model]}"'
+        analytics_plots[temp_name] = draw_histogram_model(df_err_model_liq[model],
+                                                          config.bin_size,
+                                                          config.oilfield
+                                                          )
+        temp_name = f'Ошибка прогноза (жидкость) "{config.MODEL_NAMES[model]}"'
+        analytics_plots[temp_name] = draw_wells_model(df_err_model_liq[model])
 
     # Draw common statistics
     analytics_plots['Суммарная добыча нефти'] = draw_performance(dfs,
@@ -113,15 +127,26 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
                                                                     config.MODEL_NAMES,
                                                                     mode='liq')
 
-    analytics_plots['Статистика'] = draw_statistics(models,
-                                                    model_mean,
-                                                    model_std,
-                                                    model_mean_daily,
-                                                    model_std_daily,
-                                                    config.oilfield,
-                                                    config.dates,
-                                                    config.MODEL_NAMES)
-
+    analytics_plots['Статистика по нефти'] = draw_statistics(
+        models,
+        model_mean,
+        model_std,
+        model_mean_daily,
+        model_std_daily,
+        config.oilfield,
+        config.dates,
+        config.MODEL_NAMES
+    )
+    analytics_plots['Статистика по жидкости'] = draw_statistics(
+        models,
+        model_mean_liq,
+        model_std_liq,
+        model_mean_daily_liq,
+        model_std_daily_liq,
+        config.oilfield,
+        config.dates,
+        config.MODEL_NAMES
+    )
     return analytics_plots
 
 
@@ -146,18 +171,18 @@ if __name__ == '__main__':
         dfs[filepath.stem] = df
 
     # Obtain all well names
-    columns = []
+    wells_in_model = []
     for df in dfs.values():
         df.rename(columns={f'{df.columns[0]}': 'date'}, inplace=True)
         df.date = df.date.apply(lambda x: x.date())
         df.set_index('date', inplace=True)
         df[df < 0] = 0
         df = df.reindex(config_stats.dates)
-        columns.extend(df.columns[::])
-    well_names = [col.split('_')[0] for col in columns]
-    well_names = list(dict.fromkeys(well_names))  # Remove duplicates
-    well_names = [name for name in well_names if name not in config_stats.ignore_wells]
-    config_stats.well_names = well_names
+        wells_in_model.append(set([col.split('_')[0] for col in df.columns]))
+    well_names_common = list(set.intersection(*wells_in_model))
+    well_names_all = list(set.union(*wells_in_model))
+    print('Число общих скважин: ', len(well_names_common))
+    config_stats.well_names = well_names_common
 
     analytics_plots = calculate_statistics(dfs, config_stats)
 

@@ -22,12 +22,14 @@ class ConfigStatistics:
             self,
             oilfield: str,
             dates: date_range,
+            use_abs: bool,
             well_names: tuple = (),
             ignore_wells: tuple = (),
             bin_size: int = 10,
     ):
         self.oilfield = oilfield
         self.dates = dates
+        self.use_abs = use_abs
         self.bin_size = bin_size
         self.well_names = well_names
         self.ignore_wells = ignore_wells
