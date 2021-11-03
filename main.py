@@ -180,7 +180,9 @@ if __name__ == '__main__':
         wells_in_model.append(set([col.split('_')[0] for col in df.columns]))
     well_names_common = list(set.intersection(*wells_in_model))
     well_names_all = list(set.union(*wells_in_model))
-    print('Число общих скважин: ', len(well_names_common))
+    # Можно строить статистику только для общего набора скважин (скважина рассчитана всеми моделями),
+    # либо для всех скважин (скважина рассчитана хотя бы одной моделью).
+    # Выберите, что подать в конфиг ниже: well_names_common или well_names_all.
     config_stats.well_names = well_names_common
 
     analytics_plots = calculate_statistics(dfs, config_stats)
