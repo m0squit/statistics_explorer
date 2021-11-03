@@ -1,29 +1,15 @@
 import datetime
-import numpy as np
 import pandas as pd
 import plotly as pl
 from pathlib import Path
 
 from statistics_explorer.config import ConfigStatistics
-from statistics_explorer.plots import create_well_plot, \
+from statistics_explorer.plots import calc_relative_error,\
+    create_well_plot, \
     draw_statistics, \
     draw_performance, \
     draw_wells_model, \
     draw_histogram_model
-
-
-# %% Defining methods
-def calc_relative_error(y_true: pd.Series,
-                        y_pred: pd.Series,
-                        use_abs: bool = True) -> pd.Series:
-    if use_abs:
-        err = np.abs(y_pred - y_true) / np.maximum(y_pred, y_true)
-    else:
-        err = (y_pred - y_true) / np.maximum(y_pred, y_true)
-    # Ошибка может быть больше 100%, если одно из значений отрицательное. Исключаем такие случаи.
-    err[err > 1] = 1
-    err[err < -1] = -1
-    return err * 100
 
 
 def calculate_statistics(dfs: dict, config: ConfigStatistics):
@@ -66,24 +52,33 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
             q_model = dfs[model][f'{_well_name}_oil_pred']
             q_fact_liq = dfs[model][f'{_well_name}_liq_true']
             q_model_liq = dfs[model][f'{_well_name}_liq_pred']
+            # Ошибка по суточной добыче
             df_err_model[model][f'{_well_name}'] = calc_relative_error(q_fact, q_model, use_abs=config.use_abs)
-            df_err_model_liq[model][f'{_well_name}'] = calc_relative_error(q_fact_liq, q_model_liq, use_abs=config.use_abs)
-
+            df_err_model_liq[model][f'{_well_name}'] = calc_relative_error(q_fact_liq,
+                                                                           q_model_liq,
+                                                                           use_abs=config.use_abs)
+            # Ошибка по накопленной добыче
             Q_model = q_model.cumsum()
             Q_fact = q_fact.cumsum()
             df_cumerr_model[model][f'{_well_name}'] = calc_relative_error(Q_fact, Q_model, use_abs=config.use_abs)
             Q_model_liq = q_model_liq.cumsum()
             Q_fact_liq = q_fact_liq.cumsum()
-            df_cumerr_model_liq[model][f'{_well_name}'] = calc_relative_error(Q_fact_liq, Q_model_liq, use_abs=config.use_abs)
-
+            df_cumerr_model_liq[model][f'{_well_name}'] = calc_relative_error(Q_fact_liq,
+                                                                              Q_model_liq,
+                                                                              use_abs=config.use_abs)
             df_perf[model]['факт'] += q_fact.fillna(0)
             df_perf[model]['модель'] += q_model.fillna(0)
             df_perf_liq[model]['факт'] += q_fact_liq.fillna(0)
             df_perf_liq[model]['модель'] += q_model_liq.fillna(0)
 
     for model in models:
-        df_err[model]['модель'] = calc_relative_error(df_perf[model]['факт'], df_perf[model]['модель'])
-        df_err_liq[model]['модель'] = calc_relative_error(df_perf_liq[model]['факт'], df_perf_liq[model]['модель'])
+        # Ошибка по суммарной добыче на каждые сутки
+        df_err[model]['модель'] = calc_relative_error(df_perf[model]['факт'],
+                                                      df_perf[model]['модель'],
+                                                      use_abs=False)
+        df_err_liq[model]['модель'] = calc_relative_error(df_perf_liq[model]['факт'],
+                                                          df_perf_liq[model]['модель'],
+                                                          use_abs=False)
 
         model_mean[model] = df_cumerr_model[model].mean(axis=1)
         model_std[model] = df_cumerr_model[model].std(axis=1)
@@ -100,16 +95,14 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
         temp_name = f'Распределение ошибки (нефть) "{config.MODEL_NAMES[model]}"'
         analytics_plots[temp_name] = draw_histogram_model(df_err_model[model],
                                                           config.bin_size,
-                                                          config.oilfield
-                                                          )
+                                                          config.oilfield)
         temp_name = f'Ошибка прогноза (нефть) "{config.MODEL_NAMES[model]}"'
         analytics_plots[temp_name] = draw_wells_model(df_err_model[model])
 
         temp_name = f'Распределение ошибки (жидкость) "{config.MODEL_NAMES[model]}"'
         analytics_plots[temp_name] = draw_histogram_model(df_err_model_liq[model],
                                                           config.bin_size,
-                                                          config.oilfield
-                                                          )
+                                                          config.oilfield)
         temp_name = f'Ошибка прогноза (жидкость) "{config.MODEL_NAMES[model]}"'
         analytics_plots[temp_name] = draw_wells_model(df_err_model_liq[model])
 

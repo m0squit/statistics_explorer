@@ -6,9 +6,17 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 
 
-def compute_deviation(y_true: pd.Series, y_pred: pd.Series) -> pd.Series:
-    devs = np.abs(y_true - y_pred) / np.maximum(np.abs(y_true), np.abs(y_pred)) * 100
-    return devs
+def calc_relative_error(y_true: pd.Series,
+                        y_pred: pd.Series,
+                        use_abs: bool = True) -> pd.Series:
+    if use_abs:
+        err = np.abs(y_pred - y_true) / np.maximum(y_pred, y_true)
+    else:
+        err = (y_pred - y_true) / np.maximum(y_pred, y_true)
+    # Ошибка может быть больше 100%, если одно из значений отрицательное. Исключаем такие случаи.
+    err[err > 1] = 1
+    err[err < -1] = -1
+    return err * 100
 
 
 def create_well_plot(name: str,
@@ -53,7 +61,7 @@ def create_well_plot(name: str,
                                mode=ml, marker=mark, line=dict(width=1, color=clr))
             fig.add_trace(trace, row=1, col=1)
 
-            relative_error = compute_deviation(df[f'{name}_{mode}_true'], df[f'{name}_{mode}_pred'])
+            relative_error = calc_relative_error(df[f'{name}_{mode}_true'], df[f'{name}_{mode}_pred'], use_abs=False)
             trace = go.Scatter(name=f're_{model}', x=df.index, y=relative_error,
                                mode=ml, marker=mark, line=dict(width=1, color=clr),
                                showlegend=False)
@@ -118,7 +126,7 @@ def create_well_plot_UI(
         fig.add_trace(trace, row=2, col=1)
 
         # Ошибка ансамбля
-        deviation = compute_deviation(df_oil['true'], df_ensemble['ensemble'])
+        deviation = calc_relative_error(df_oil['true'], df_ensemble['ensemble'], use_abs=False)
         trace = go.Scatter(name=f'OIL ERR: Ансамбль', x=deviation.index, y=deviation,
                            mode=ml, marker=mark, line=dict(width=1, color=colors[-3]))
         fig.add_trace(trace, row=3, col=1)
@@ -149,7 +157,7 @@ def create_well_plot_UI(
     for ind, col in enumerate(df_oil.columns):
         if col == 'true':
             continue
-        deviation = compute_deviation(df_oil['true'], df_oil[col])
+        deviation = calc_relative_error(df_oil['true'], df_oil[col], use_abs=False)
         trace = go.Scatter(name=f'OIL ERR: {MODEL_NAMES[col]}', x=deviation.index, y=deviation,
                            mode=ml, marker=mark, line=dict(width=1, color=colors[ind]))
         fig.add_trace(trace, row=3, col=1)
