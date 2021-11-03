@@ -48,7 +48,7 @@ def create_well_plot(name: str,
     ml = 'markers+lines'
     colors = px.colors.qualitative.Safe
 
-    # TODO: сейчас факт строится по всем моделям
+    # сейчас факт строится по всем моделям
     for ind, (model, df) in enumerate(dfs.items()):
         if f'{name}_{mode}_pred' in df.columns:
             clr = colors[ind]
@@ -84,7 +84,6 @@ def create_well_plot_UI(
         cols=1,
         shared_xaxes=True,
         vertical_spacing=0.07,
-        # TODO: в м3 или нет?
         subplot_titles=[
             'Дебит жидкости, м3',
             'Дебит нефти, м3',
@@ -128,7 +127,7 @@ def create_well_plot_UI(
         # Ошибка ансамбля
         deviation = calc_relative_error(df_oil['true'], df_ensemble['ensemble'], use_abs=False)
         trace = go.Scatter(name=f'OIL ERR: Ансамбль', x=deviation.index, y=deviation,
-                           mode=ml, marker=mark, line=dict(width=1, color=colors[-3]))
+                           mode=ml, marker=mark, line=dict(width=1, color='rgba(115, 175, 72, 0.5)'))
         fig.add_trace(trace, row=3, col=1)
 
     # Дебит жидкости
@@ -302,7 +301,7 @@ def draw_performance(dfs: dict,
     ml = 'markers+lines'
     colors = px.colors.qualitative.Safe
 
-    # TODO: сейчас факт строится по всем моделям
+    # сейчас факт строится по всем моделям
     for ind, model in enumerate(dfs.keys()):
         clr = colors[ind]
         x = df_perf[model].index

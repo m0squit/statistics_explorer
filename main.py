@@ -75,10 +75,10 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
         # Ошибка по суммарной добыче на каждые сутки
         df_err[model]['модель'] = calc_relative_error(df_perf[model]['факт'],
                                                       df_perf[model]['модель'],
-                                                      use_abs=False)
+                                                      use_abs=config.use_abs)
         df_err_liq[model]['модель'] = calc_relative_error(df_perf_liq[model]['факт'],
                                                           df_perf_liq[model]['модель'],
-                                                          use_abs=False)
+                                                          use_abs=config.use_abs)
 
         model_mean[model] = df_cumerr_model[model].mean(axis=1)
         model_std[model] = df_cumerr_model[model].std(axis=1)
@@ -146,11 +146,17 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
 if __name__ == '__main__':
     # Конфиг
     config_stats = ConfigStatistics(
-        oilfield='Крайнее',
-        dates=pd.date_range(datetime.date(2019, 2, 1), datetime.date(2019, 4, 30), freq='D').date,
+        oilfield='vyngayakhinskoe',
+        dates=pd.date_range(datetime.date(2019, 4, 1), datetime.date(2019, 6, 30), freq='D').date,
+        use_abs=False,
         ignore_wells=(),
         bin_size=10,
     )
+    # Задание имен моделей на графиках. Ключ - название .xlsx файла, значение - название на графике.
+    config_stats.MODEL_NAMES = {'CRM_ML': 'CRM',
+                                'Piezo': 'Пьезо',
+                                'Xgb_SVR': 'Xgb_SVR',
+                                'Ela_Xgb': 'Ela_Xgb'}
     path_read = Path.cwd() / 'input_data' / config_stats.oilfield
     path_save = Path.cwd() / 'output' / config_stats.oilfield
 
@@ -178,19 +184,22 @@ if __name__ == '__main__':
     config_stats.well_names = well_names_common
 
     analytics_plots = calculate_statistics(dfs, config_stats)
+    available_plots = [*analytics_plots]
+    plots_to_save = [plot_name for plot_name in available_plots
+                     if plot_name not in config_stats.ignore_plots]
 
     # Сохранение поскважинных графиков
     for mode in ['liq', 'oil']:
         if not Path(f'{path_save}/well plots/{mode}').exists():
             Path(f'{path_save}/well plots/{mode}').mkdir(parents=True, exist_ok=True)
-        for name in well_names:
+        for name in config_stats.well_names:
             fig = create_well_plot(name, dfs, oilfield=config_stats.oilfield, mode=mode)
             pl.io.write_image(fig, file=f'{path_save}/well plots/{mode}/{name}.png',
                               width=1450, height=700, scale=2, engine='kaleido')
             # fig.write_html(f'{path_save}/well plots/{mode}/{name}.html')
 
     # Сохранение графиков статистики
-    for plot_name in analytics_plots:
+    for plot_name in plots_to_save:
         savename = plot_name.replace('"', '')
         pl.io.write_image(analytics_plots[plot_name], file=f'{path_save}/{savename}.png',
                           width=1450, height=700, scale=2, engine='kaleido')
