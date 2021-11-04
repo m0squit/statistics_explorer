@@ -1,4 +1,3 @@
-import plotly.express as px
 from pandas import date_range
 
 
@@ -24,7 +23,6 @@ class ConfigStatistics:
             dates: date_range,
             use_abs: bool,
             well_names: tuple = (),
-            ignore_wells: tuple = (),
             bin_size: int = 10,
     ):
         self.oilfield = oilfield
@@ -32,4 +30,6 @@ class ConfigStatistics:
         self.use_abs = use_abs
         self.bin_size = bin_size
         self.well_names = well_names
-        self.ignore_wells = ignore_wells
+
+    def exclude_wells(self, exclude_wells: list):
+        self.well_names = [elem for elem in self.well_names if elem not in exclude_wells]

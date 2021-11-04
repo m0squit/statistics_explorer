@@ -149,7 +149,6 @@ if __name__ == '__main__':
         oilfield='vyngayakhinskoe',
         dates=pd.date_range(datetime.date(2019, 4, 1), datetime.date(2019, 6, 30), freq='D').date,
         use_abs=False,
-        ignore_wells=(),
         bin_size=10,
     )
     # Задание имен моделей на графиках. Ключ - название .xlsx файла, значение - название на графике.
@@ -184,6 +183,7 @@ if __name__ == '__main__':
     # либо для всех скважин (скважина рассчитана хотя бы одной моделью).
     # Выберите, что подать в конфиг ниже: well_names_common или well_names_all.
     config_stats.well_names = well_names_common
+    config_stats.exclude_wells(['2860242300'])  # Список названий скважин, которые нужно исключить из статистики
 
     analytics_plots = calculate_statistics(dfs, config_stats)
     available_plots = [*analytics_plots]
