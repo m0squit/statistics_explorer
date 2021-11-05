@@ -69,121 +69,81 @@ def create_well_plot(name: str,
     return fig
 
 
-def create_well_plot_UI(
-        df_liq: pd.DataFrame,
-        df_oil: pd.DataFrame,
-        df_ensemble: pd.DataFrame,
-        pressure: pd.Series,
-        date_test: datetime.date,
-        events: pd.DataFrame,
-        wellname: str,
-        MODEL_NAMES: dict,
-):
-    fig = make_subplots(
-        rows=4,
-        cols=1,
-        shared_xaxes=True,
-        vertical_spacing=0.07,
-        subplot_titles=[
-            'Дебит жидкости, м3',
-            'Дебит нефти, м3',
-            'Относительная ошибка по нефти, %',
-            'Забойное давление, атм',
-        ]
-    )
-    fig.layout.template = 'seaborn'
-    fig.update_layout(
-        font=dict(size=15),
-        title_text=f'Скважина {wellname}',
-        legend=dict(orientation="v",
-                    font=dict(size=15),
-                    traceorder='normal'
-                    ),
-        height=760,
-        width=1300,
-    )
-
-    mark = dict(size=4)
-    m = 'markers'
-    ml = 'markers+lines'
-    colors = px.colors.qualitative.Pastel
-    clr_fact = 'rgba(99, 110, 250, 0.7)'
-    clr_pressure = '#C075A6'
-
-    # Ансамбль
-    if not df_ensemble.empty:
-        trace = go.Scatter(name=f'OIL: Ансамбль', x=df_ensemble.index, y=df_ensemble['ensemble'],
-                           mode=ml, marker=mark, line=dict(width=1, color='rgba(115, 175, 72, 0.7)'))
+def create_well_plot_UI(statistics: dict,
+                        df_chess: pd.DataFrame,
+                        dates: pd.date_range,
+                        date_test: datetime.date,
+                        date_test_period: datetime.date,
+                        wellname: str,
+                        MODEL_NAMES: dict,
+                        ensemble_interval: pd.DataFrame = pd.DataFrame()):
+    fig = make_subplots(rows=4, cols=1, shared_xaxes=True, vertical_spacing=0.07,
+                        subplot_titles=['Дебит жидкости, м3',
+                                        'Дебит нефти, м3',
+                                        'Относительная ошибка по нефти, %',
+                                        'Забойное давление, атм'])
+    fig.update_layout(font=dict(size=15),
+                      template='seaborn',
+                      title_text=f'Скважина {wellname}',
+                      legend=dict(orientation="v",
+                                  font=dict(size=15),
+                                  traceorder='normal'),
+                      height=760,
+                      width=1300)
+    mark, m, ml = dict(size=4), 'markers', 'markers+lines'
+    colors = {'ftor': px.colors.qualitative.Pastel[1],
+              'wolfram': 'rgba(248, 156, 116, 0.6)',
+              'CRM': px.colors.qualitative.Pastel[6],
+              'ensemble': 'rgba(115, 175, 72, 0.7)',
+              'ensemble_interval': 'rgba(184, 247, 212, 0.7)',
+              'true': 'rgba(99, 110, 250, 0.7)',
+              'pressure': '#C075A6'}
+    if not ensemble_interval.empty:
+        trace = go.Scatter(name=f'OIL: Доверит. интервал', x=ensemble_interval.index, y=ensemble_interval[f'{wellname}_lower'],
+                           mode='lines', line=dict(width=1, color=colors['ensemble_interval']))
         fig.add_trace(trace, row=2, col=1)
-
-        trace = go.Scatter(name=f'OIL: Доверит. интервал', x=df_ensemble.index, y=df_ensemble['interval_lower'],
-                           mode='lines', line=dict(width=1, color='rgba(184, 247, 212, 0.7)'))
+        trace = go.Scatter(name=f'OIL: Доверит. интервал', x=ensemble_interval.index, y=ensemble_interval[f'{wellname}_upper'],
+                           fill='tonexty', mode='lines', line=dict(width=1, color=colors['ensemble_interval']))
         fig.add_trace(trace, row=2, col=1)
-
-        trace = go.Scatter(name=f'OIL: Доверит. интервал', x=df_ensemble.index, y=df_ensemble['interval_upper'],
-                           fill='tonexty', mode='lines', line=dict(width=1, color='rgba(184, 247, 212, 0.7)'))
-        fig.add_trace(trace, row=2, col=1)
-
-        # Ошибка ансамбля
-        deviation = calc_relative_error(df_oil['true'], df_ensemble['ensemble'], use_abs=False)
-        trace = go.Scatter(name=f'OIL ERR: Ансамбль', x=deviation.index, y=deviation,
-                           mode=ml, marker=mark, line=dict(width=1, color='rgba(115, 175, 72, 0.5)'))
-        fig.add_trace(trace, row=3, col=1)
-
-    # Дебит жидкости
-    trace = go.Scatter(name=f'LIQ: {MODEL_NAMES["true"]}', x=df_liq.index, y=df_liq['true'],
-                       mode=m, marker=mark, line=dict(width=1, color=clr_fact))
+        fig.add_vline(x=date_test_period, line_width=1, line_dash='dash', exclude_empty_subplots=False)
+    x = dates
+    y_liq_true = df_chess['Дебит жидкости']
+    y_oil_true = df_chess['Дебит нефти']
+    # Факт
+    trace = go.Scatter(name=f'LIQ: {MODEL_NAMES["true"]}', x=x, y=y_liq_true,
+                       mode=m, marker=dict(size=5, color=colors['true']))
     fig.add_trace(trace, row=1, col=1)
-    for ind, col in enumerate(df_liq.columns):
-        if col == 'true':
-            continue
-        trace = go.Scatter(name=f'LIQ: {MODEL_NAMES[col]}', x=df_liq.index, y=df_liq[col],
-                           mode=ml, marker=mark, line=dict(width=1, color=colors[ind]))
-        fig.add_trace(trace, row=1, col=1)
-
-    # Дебит нефти
-    trace = go.Scatter(name=f'OIL: {MODEL_NAMES["true"]}', x=df_oil.index, y=df_oil['true'],
-                       mode=m, marker=mark, line=dict(width=1, color=clr_fact))
+    trace = go.Scatter(name=f'OIL: {MODEL_NAMES["true"]}', x=x, y=y_oil_true,
+                       mode=m, marker=dict(size=5, color=colors['true']))
     fig.add_trace(trace, row=2, col=1)
-    for ind, col in enumerate(df_oil.columns):
-        if col == 'true':
-            continue
-        trace = go.Scatter(name=f'OIL: {MODEL_NAMES[col]}', x=df_oil.index, y=df_oil[col],
-                           mode=ml, marker=mark, line=dict(width=1, color=colors[ind]))
-        fig.add_trace(trace, row=2, col=1)
-
-    # Отклонения по моделям: дебит нефти
-    for ind, col in enumerate(df_oil.columns):
-        if col == 'true':
-            continue
-        deviation = calc_relative_error(df_oil['true'], df_oil[col], use_abs=False)
-        trace = go.Scatter(name=f'OIL ERR: {MODEL_NAMES[col]}', x=deviation.index, y=deviation,
-                           mode=ml, marker=mark, line=dict(width=1, color=colors[ind]))
-        fig.add_trace(trace, row=3, col=1)
-
+    for model in statistics:
+        if f'{wellname}_oil_pred' in statistics[model]:
+            clr = colors[model]
+            y_liq = statistics[model][f'{wellname}_liq_pred']
+            y_oil = statistics[model][f'{wellname}_oil_pred']
+            trace_liq = go.Scatter(name=f'LIQ: {MODEL_NAMES[model]}', x=x, y=y_liq,
+                                   mode=ml, marker=mark, line=dict(width=1, color=clr))
+            fig.add_trace(trace_liq, row=1, col=1)  # Дебит жидкости
+            trace_oil = go.Scatter(name=f'OIL: {MODEL_NAMES[model]}', x=x, y=y_oil,
+                                   mode=ml, marker=mark, line=dict(width=1, color=clr))
+            fig.add_trace(trace_oil, row=2, col=1)  # Дебит нефти
+            deviation = calc_relative_error(y_oil_true, y_oil, use_abs=False)
+            trace_err = go.Scatter(name=f'OIL ERR: {MODEL_NAMES[model]}', x=deviation.index, y=deviation,
+                                   mode=ml, marker=mark, line=dict(width=1, color=clr))
+            fig.add_trace(trace_err, row=3, col=1)  # Ошибка по нефти
     # Забойное давление
-    trace = go.Scatter(name=f'Заб. давление', x=pressure.index, y=pressure,
-                       mode=m, marker=dict(size=4, color=clr_pressure))
-    fig.add_trace(trace, row=4, col=1)
-
+    pressure = df_chess['Давление забойное']
+    trace_pressure = go.Scatter(name=f'Заб. давление', x=pressure.index, y=pressure,
+                                mode=m, marker=dict(size=4, color=colors['pressure']))
+    fig.add_trace(trace_pressure, row=4, col=1)
     # Мероприятия
+    events = df_chess['Мероприятие']
     _events = events.dropna()
-    trace = go.Scatter(
-        name='Мероприятие',
-        x=_events.index,
-        y=[0.2] * len(_events),
-        mode='markers+text',
-        marker=dict(size=8),
-        text=_events.array,
-        textposition='top center',
-        textfont=dict(size=12),
-    )
-    fig.add_trace(trace, row=4, col=1)
-
+    trace_events = go.Scatter(name='Мероприятие', x=_events.index, y=[0.2] * len(_events),
+                              mode='markers+text', marker=dict(size=8), text=_events.array,
+                              textposition='top center', textfont=dict(size=12))
+    fig.add_trace(trace_events, row=4, col=1)
     fig.add_vline(x=date_test, line_width=1, line_dash='dash')
-    if not df_ensemble.empty:
-        fig.add_vline(x=df_ensemble.index[0], line_width=1, line_dash='dash')
-
     return fig
 
 
