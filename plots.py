@@ -70,10 +70,11 @@ def create_well_plot(name: str,
 
 
 def create_well_plot_UI(statistics: dict,
-                        df_chess: pd.DataFrame,
+                        well_wolfram,
                         dates: pd.date_range,
                         date_test: datetime.date,
                         date_test_period: datetime.date,
+                        events: pd.DataFrame,
                         wellname: str,
                         MODEL_NAMES: dict,
                         ensemble_interval: pd.DataFrame = pd.DataFrame()):
@@ -99,16 +100,19 @@ def create_well_plot_UI(statistics: dict,
               'true': 'rgba(99, 110, 250, 0.7)',
               'pressure': '#C075A6'}
     if not ensemble_interval.empty:
-        trace = go.Scatter(name=f'OIL: Доверит. интервал', x=ensemble_interval.index, y=ensemble_interval[f'{wellname}_lower'],
+        trace = go.Scatter(name=f'OIL: Доверит. интервал',
+                           x=ensemble_interval.index, y=ensemble_interval[f'{wellname}_lower'],
                            mode='lines', line=dict(width=1, color=colors['ensemble_interval']))
         fig.add_trace(trace, row=2, col=1)
-        trace = go.Scatter(name=f'OIL: Доверит. интервал', x=ensemble_interval.index, y=ensemble_interval[f'{wellname}_upper'],
+        trace = go.Scatter(name=f'OIL: Доверит. интервал',
+                           x=ensemble_interval.index, y=ensemble_interval[f'{wellname}_upper'],
                            fill='tonexty', mode='lines', line=dict(width=1, color=colors['ensemble_interval']))
         fig.add_trace(trace, row=2, col=1)
         fig.add_vline(x=date_test_period, line_width=1, line_dash='dash', exclude_empty_subplots=False)
     x = dates
-    y_liq_true = df_chess['Дебит жидкости']
-    y_oil_true = df_chess['Дебит нефти']
+    well_wolfram_df = well_wolfram.df.copy().reindex(dates)
+    y_liq_true = well_wolfram_df[well_wolfram.NAME_RATE_LIQ]
+    y_oil_true = well_wolfram_df[well_wolfram.NAME_RATE_OIL]
     # Факт
     trace = go.Scatter(name=f'LIQ: {MODEL_NAMES["true"]}', x=x, y=y_liq_true,
                        mode=m, marker=dict(size=5, color=colors['true']))
@@ -132,12 +136,11 @@ def create_well_plot_UI(statistics: dict,
                                    mode=ml, marker=mark, line=dict(width=1, color=clr))
             fig.add_trace(trace_err, row=3, col=1)  # Ошибка по нефти
     # Забойное давление
-    pressure = df_chess['Давление забойное']
+    pressure = well_wolfram_df[well_wolfram.NAME_PRESSURE]
     trace_pressure = go.Scatter(name=f'Заб. давление', x=pressure.index, y=pressure,
                                 mode=m, marker=dict(size=4, color=colors['pressure']))
     fig.add_trace(trace_pressure, row=4, col=1)
     # Мероприятия
-    events = df_chess['Мероприятие']
     _events = events.dropna()
     trace_events = go.Scatter(name='Мероприятие', x=_events.index, y=[0.2] * len(_events),
                               mode='markers+text', marker=dict(size=8), text=_events.array,
