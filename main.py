@@ -37,30 +37,28 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
     model_std_daily_liq = dict.fromkeys(models)
 
     # Calculations
-    print(f'Месторождение: {config.oilfield}')
-    print(f'Количество различных скважин: {len(config.well_names)}')
-    for model, _df in dfs.items():
-        print(f'{model} число скважин: {_df.shape[1] // 4}')
-
     for model in models:
         for _well_name in config.well_names:
             # Check if current model has this well
             if f'{_well_name}_oil_true' not in dfs[model].columns:
                 continue
-
             q_fact = dfs[model][f'{_well_name}_oil_true']
             q_model = dfs[model][f'{_well_name}_oil_pred']
             q_fact_liq = dfs[model][f'{_well_name}_liq_true']
             q_model_liq = dfs[model][f'{_well_name}_liq_pred']
             # Ошибка по суточной добыче
-            df_err_model[model][f'{_well_name}'] = calc_relative_error(q_fact, q_model, use_abs=config.use_abs)
+            df_err_model[model][f'{_well_name}'] = calc_relative_error(q_fact,
+                                                                       q_model,
+                                                                       use_abs=config.use_abs)
             df_err_model_liq[model][f'{_well_name}'] = calc_relative_error(q_fact_liq,
                                                                            q_model_liq,
                                                                            use_abs=config.use_abs)
             # Ошибка по накопленной добыче
             Q_model = q_model.cumsum()
             Q_fact = q_fact.cumsum()
-            df_cumerr_model[model][f'{_well_name}'] = calc_relative_error(Q_fact, Q_model, use_abs=config.use_abs)
+            df_cumerr_model[model][f'{_well_name}'] = calc_relative_error(Q_fact,
+                                                                          Q_model,
+                                                                          use_abs=config.use_abs)
             Q_model_liq = q_model_liq.cumsum()
             Q_fact_liq = q_fact_liq.cumsum()
             df_cumerr_model_liq[model][f'{_well_name}'] = calc_relative_error(Q_fact_liq,
