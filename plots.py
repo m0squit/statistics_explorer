@@ -70,11 +70,13 @@ def create_well_plot(name: str,
 
 
 def create_well_plot_UI(statistics: dict,
-                        well_wolfram,
                         dates: pd.date_range,
                         date_test: datetime.date,
-                        date_test_period: datetime.date,
+                        date_test_ensemble: datetime.date,
                         events: pd.DataFrame,
+                        y_liq_true: pd.DataFrame,
+                        y_oil_true: pd.DataFrame,
+                        pressure: pd.DataFrame,
                         wellname: str,
                         MODEL_NAMES: dict,
                         ensemble_interval: pd.DataFrame = pd.DataFrame()):
@@ -108,11 +110,8 @@ def create_well_plot_UI(statistics: dict,
                            x=ensemble_interval.index, y=ensemble_interval[f'{wellname}_upper'],
                            fill='tonexty', mode='lines', line=dict(width=1, color=colors['ensemble_interval']))
         fig.add_trace(trace, row=2, col=1)
-        fig.add_vline(x=date_test_period, line_width=1, line_dash='dash', exclude_empty_subplots=False)
+        fig.add_vline(x=date_test_ensemble, line_width=1, line_dash='dash', exclude_empty_subplots=False)
     x = dates
-    well_wolfram_df = well_wolfram.df.copy().reindex(dates)
-    y_liq_true = well_wolfram_df[well_wolfram.NAME_RATE_LIQ]
-    y_oil_true = well_wolfram_df[well_wolfram.NAME_RATE_OIL]
     # Факт
     trace = go.Scatter(name=f'LIQ: {MODEL_NAMES["true"]}', x=x, y=y_liq_true,
                        mode=m, marker=dict(size=5, color=colors['true']))
@@ -136,7 +135,6 @@ def create_well_plot_UI(statistics: dict,
                                    mode=ml, marker=mark, line=dict(width=1, color=clr))
             fig.add_trace(trace_err, row=3, col=1)  # Ошибка по нефти
     # Забойное давление
-    pressure = well_wolfram_df[well_wolfram.NAME_PRESSURE]
     trace_pressure = go.Scatter(name=f'Заб. давление', x=pressure.index, y=pressure,
                                 mode=m, marker=dict(size=4, color=colors['pressure']))
     fig.add_trace(trace_pressure, row=4, col=1)
