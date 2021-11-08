@@ -73,10 +73,7 @@ def create_well_plot_UI(statistics: dict,
                         dates: pd.date_range,
                         date_test: datetime.date,
                         date_test_ensemble: datetime.date,
-                        events: pd.DataFrame,
-                        y_liq_true: pd.DataFrame,
-                        y_oil_true: pd.DataFrame,
-                        pressure: pd.DataFrame,
+                        df_chess: pd.DataFrame,
                         wellname: str,
                         MODEL_NAMES: dict,
                         ensemble_interval: pd.DataFrame = pd.DataFrame()):
@@ -101,6 +98,8 @@ def create_well_plot_UI(statistics: dict,
               'ensemble_interval': 'rgba(184, 247, 212, 0.7)',
               'true': 'rgba(99, 110, 250, 0.7)',
               'pressure': '#C075A6'}
+    y_liq_true = df_chess['Дебит жидкости']
+    y_oil_true = df_chess['Дебит нефти']
     if not ensemble_interval.empty:
         trace = go.Scatter(name=f'OIL: Доверит. интервал',
                            x=ensemble_interval.index, y=ensemble_interval[f'{wellname}_lower'],
@@ -135,10 +134,12 @@ def create_well_plot_UI(statistics: dict,
                                    mode=ml, marker=mark, line=dict(width=1, color=clr))
             fig.add_trace(trace_err, row=3, col=1)  # Ошибка по нефти
     # Забойное давление
+    pressure = df_chess['Давление забойное']
     trace_pressure = go.Scatter(name=f'Заб. давление', x=pressure.index, y=pressure,
                                 mode=m, marker=dict(size=4, color=colors['pressure']))
     fig.add_trace(trace_pressure, row=4, col=1)
     # Мероприятия
+    events = df_chess['Мероприятие']
     _events = events.dropna()
     trace_events = go.Scatter(name='Мероприятие', x=_events.index, y=[0.2] * len(_events),
                               mode='markers+text', marker=dict(size=8), text=_events.array,
