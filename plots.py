@@ -100,7 +100,7 @@ def create_well_plot_UI(statistics: dict,
               'pressure': '#C075A6'}
     y_liq_true = df_chess['Дебит жидкости']
     y_oil_true = df_chess['Дебит нефти']
-    if not ensemble_interval.empty:
+    if not ensemble_interval.empty and f'{wellname}_lower' in ensemble_interval.columns:
         trace = go.Scatter(name=f'OIL: Доверит. интервал',
                            x=ensemble_interval.index, y=ensemble_interval[f'{wellname}_lower'],
                            mode='lines', line=dict(width=1, color=colors['ensemble_interval']))
