@@ -72,7 +72,7 @@ def create_well_plot(name: str,
 def create_well_plot_UI(statistics: dict,
                         dates: pd.date_range,
                         date_test: datetime.date,
-                        date_test_ensemble: datetime.date,
+                        date_test_if_ensemble: datetime.date,
                         df_chess: pd.DataFrame,
                         wellname: str,
                         MODEL_NAMES: dict,
@@ -109,7 +109,7 @@ def create_well_plot_UI(statistics: dict,
                            x=ensemble_interval.index, y=ensemble_interval[f'{wellname}_upper'],
                            fill='tonexty', mode='lines', line=dict(width=1, color=colors['ensemble_interval']))
         fig.add_trace(trace, row=2, col=1)
-        fig.add_vline(x=date_test_ensemble, line_width=1, line_dash='dash', exclude_empty_subplots=False)
+        fig.add_vline(x=date_test_if_ensemble, line_width=1, line_dash='dash', exclude_empty_subplots=False)
     x = dates
     # Факт
     trace = go.Scatter(name=f'LIQ: {MODEL_NAMES["true"]}', x=x, y=y_liq_true,
