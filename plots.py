@@ -90,7 +90,7 @@ def create_well_plot_UI(statistics: dict,
                                   traceorder='normal'),
                       height=760,
                       width=1300)
-    mark, m, ml = dict(size=4), 'markers', 'markers+lines'
+    mark, m, ml = dict(size=3), 'markers', 'markers+lines'
     colors = {'ftor': px.colors.qualitative.Pastel[1],
               'wolfram': 'rgba(248, 156, 116, 0.6)',
               'CRM': px.colors.qualitative.Pastel[6],
@@ -111,7 +111,6 @@ def create_well_plot_UI(statistics: dict,
                            fill='tonexty', mode='lines', line=dict(width=1, color=colors['ensemble_interval']))
         fig.add_trace(trace, row=2, col=1)
         fig.add_vline(x=date_test_if_ensemble, line_width=1, line_dash='dash', exclude_empty_subplots=False)
-    x = dates
     # Факт
     trace = go.Scatter(name=f'LIQ: {MODEL_NAMES["true"]}', x=y_liq_true.index, y=y_liq_true,
                        mode=m, marker=dict(size=5, color=colors['true']))
@@ -132,7 +131,7 @@ def create_well_plot_UI(statistics: dict,
             fig.add_trace(trace_oil, row=2, col=1)  # Дебит нефти
             deviation = calc_relative_error(y_oil_true, y_oil, use_abs=False)
             trace_err = go.Scatter(name=f'OIL ERR: {MODEL_NAMES[model]}', x=deviation.index, y=deviation,
-                                   mode=ml, marker=mark, line=dict(width=1, color=clr))
+                                   mode=ml, marker=dict(size=4), line=dict(width=1, color=clr))
             fig.add_trace(trace_err, row=3, col=1)  # Ошибка по нефти
     # Забойное давление
     pressure = df_chess['Давление забойное']
