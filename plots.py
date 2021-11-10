@@ -90,7 +90,7 @@ def create_well_plot_UI(statistics: dict,
                                   traceorder='normal'),
                       height=760,
                       width=1300)
-    mark, m, ml = dict(size=3), 'markers', 'markers+lines'
+    mark, m = dict(size=3), 'markers'
     colors = {'ftor': px.colors.qualitative.Pastel[1],
               'wolfram': 'rgba(248, 156, 116, 0.8)',
               'CRM': px.colors.qualitative.Pastel[6],
@@ -98,7 +98,7 @@ def create_well_plot_UI(statistics: dict,
               'ensemble_interval': 'rgba(184, 247, 212, 0.7)',
               'true': 'rgba(99, 110, 250, 0.7)',
               'pressure': '#C075A6'}
-    df_chess = df_chess.copy().reindex(dates)
+    df_chess = df_chess.copy().dropna(subset=['Дебит жидкости', 'Дебит нефти'], how='any')
     y_liq_true = df_chess['Дебит жидкости']
     y_oil_true = df_chess['Дебит нефти']
     if not ensemble_interval.empty and f'{wellname}_lower' in ensemble_interval.columns:
@@ -121,17 +121,17 @@ def create_well_plot_UI(statistics: dict,
     for model in statistics:
         if f'{wellname}_oil_pred' in statistics[model]:
             clr = colors[model]
-            y_liq = statistics[model][f'{wellname}_liq_pred']
-            y_oil = statistics[model][f'{wellname}_oil_pred']
+            y_liq = statistics[model][f'{wellname}_liq_pred'].dropna()
+            y_oil = statistics[model][f'{wellname}_oil_pred'].dropna()
             trace_liq = go.Scatter(name=f'LIQ: {MODEL_NAMES[model]}', x=y_liq.index, y=y_liq,
-                                   mode=ml, marker=mark, line=dict(width=1, color=clr))
+                                   mode=m, marker=mark, line=dict(width=1, color=clr))
             fig.add_trace(trace_liq, row=1, col=1)  # Дебит жидкости
             trace_oil = go.Scatter(name=f'OIL: {MODEL_NAMES[model]}', x=y_oil.index, y=y_oil,
-                                   mode=ml, marker=mark, line=dict(width=1, color=clr))
+                                   mode=m, marker=mark, line=dict(width=1, color=clr))
             fig.add_trace(trace_oil, row=2, col=1)  # Дебит нефти
             deviation = calc_relative_error(y_oil_true, y_oil, use_abs=False)
             trace_err = go.Scatter(name=f'OIL ERR: {MODEL_NAMES[model]}', x=deviation.index, y=deviation,
-                                   mode=ml, marker=dict(size=4), line=dict(width=1, color=clr))
+                                   mode=m, marker=dict(size=4), line=dict(width=1, color=clr))
             fig.add_trace(trace_err, row=3, col=1)  # Ошибка по нефти
     # Забойное давление
     pressure = df_chess['Давление забойное']
