@@ -98,6 +98,7 @@ def create_well_plot_UI(statistics: dict,
               'ensemble_interval': 'rgba(184, 247, 212, 0.7)',
               'true': 'rgba(99, 110, 250, 0.7)',
               'pressure': '#C075A6'}
+    df_chess = df_chess.copy().reindex(dates)
     y_liq_true = df_chess['Дебит жидкости']
     y_oil_true = df_chess['Дебит нефти']
     if not ensemble_interval.empty and f'{wellname}_lower' in ensemble_interval.columns:
@@ -112,10 +113,10 @@ def create_well_plot_UI(statistics: dict,
         fig.add_vline(x=date_test_if_ensemble, line_width=1, line_dash='dash', exclude_empty_subplots=False)
     x = dates
     # Факт
-    trace = go.Scatter(name=f'LIQ: {MODEL_NAMES["true"]}', x=x, y=y_liq_true,
+    trace = go.Scatter(name=f'LIQ: {MODEL_NAMES["true"]}', x=y_liq_true.index, y=y_liq_true,
                        mode=m, marker=dict(size=5, color=colors['true']))
     fig.add_trace(trace, row=1, col=1)
-    trace = go.Scatter(name=f'OIL: {MODEL_NAMES["true"]}', x=x, y=y_oil_true,
+    trace = go.Scatter(name=f'OIL: {MODEL_NAMES["true"]}', x=y_oil_true.index, y=y_oil_true,
                        mode=m, marker=dict(size=5, color=colors['true']))
     fig.add_trace(trace, row=2, col=1)
     for model in statistics:
@@ -123,10 +124,10 @@ def create_well_plot_UI(statistics: dict,
             clr = colors[model]
             y_liq = statistics[model][f'{wellname}_liq_pred']
             y_oil = statistics[model][f'{wellname}_oil_pred']
-            trace_liq = go.Scatter(name=f'LIQ: {MODEL_NAMES[model]}', x=x, y=y_liq,
+            trace_liq = go.Scatter(name=f'LIQ: {MODEL_NAMES[model]}', x=y_liq.index, y=y_liq,
                                    mode=ml, marker=mark, line=dict(width=1, color=clr))
             fig.add_trace(trace_liq, row=1, col=1)  # Дебит жидкости
-            trace_oil = go.Scatter(name=f'OIL: {MODEL_NAMES[model]}', x=x, y=y_oil,
+            trace_oil = go.Scatter(name=f'OIL: {MODEL_NAMES[model]}', x=y_oil.index, y=y_oil,
                                    mode=ml, marker=mark, line=dict(width=1, color=clr))
             fig.add_trace(trace_oil, row=2, col=1)  # Дебит нефти
             deviation = calc_relative_error(y_oil_true, y_oil, use_abs=False)
