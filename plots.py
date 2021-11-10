@@ -92,7 +92,7 @@ def create_well_plot_UI(statistics: dict,
                       width=1300)
     mark, m, ml = dict(size=3), 'markers', 'markers+lines'
     colors = {'ftor': px.colors.qualitative.Pastel[1],
-              'wolfram': 'rgba(248, 156, 116, 0.6)',
+              'wolfram': 'rgba(248, 156, 116, 0.8)',
               'CRM': px.colors.qualitative.Pastel[6],
               'ensemble': 'rgba(115, 175, 72, 0.7)',
               'ensemble_interval': 'rgba(184, 247, 212, 0.7)',
