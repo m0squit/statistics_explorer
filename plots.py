@@ -70,7 +70,6 @@ def create_well_plot(name: str,
 
 
 def create_well_plot_UI(statistics: dict,
-                        dates: pd.date_range,
                         date_test: datetime.date,
                         date_test_if_ensemble: datetime.date,
                         df_chess: pd.DataFrame,
