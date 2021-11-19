@@ -87,7 +87,7 @@ def create_well_plot_UI(statistics: dict,
                       legend=dict(orientation="v",
                                   font=dict(size=15),
                                   traceorder='normal'),
-                      height=760,
+                      height=630,
                       width=1300)
     mark, m = dict(size=3), 'markers'
     colors = {'ftor': px.colors.qualitative.Pastel[1],
@@ -159,7 +159,7 @@ def draw_histogram_model(df_err: pd.DataFrame,
         rows=3,
         cols=1,
         shared_xaxes=True,
-        vertical_spacing=0.05,
+        vertical_spacing=0.06,
         subplot_titles=[
             f'За {days[0]} суток',
             f'За {days[1]} суток',
@@ -172,6 +172,7 @@ def draw_histogram_model(df_err: pd.DataFrame,
         bargap=0.005,
         font=dict(size=15),
         showlegend=False,
+        height=630,
     )
 
     for ind, day in enumerate(days):
@@ -246,22 +247,15 @@ def draw_performance(dfs: dict,
                         'Относительное отклонение от факта, %'],
     )
     fig.layout.template = 'seaborn'
-
-    text = f'Месторождение {oilfield}'
     fig.update_layout(
-        title=dict(text=text, x=0.05, xanchor='left'),
+        title=dict(text=f'Месторождение {oilfield}', x=0.05, xanchor='left'),
         font=dict(size=10),
-        legend=dict(
-            # orientation="h",
-            font=dict(size=15)
-        )
-    )
-
+        legend=dict(font=dict(size=15)),
+        height=630)
     mark = dict(size=4)
     m = 'markers'
     ml = 'markers+lines'
     colors = px.colors.qualitative.Safe
-
     # сейчас факт строится по всем моделям
     for ind, model in enumerate(dfs.keys()):
         clr = colors[ind]
@@ -269,7 +263,6 @@ def draw_performance(dfs: dict,
         trace = go.Scatter(name=f'факт {MODEL_NAMES[model]}', x=x, y=df_perf[model]['факт'],
                            mode=m, marker=mark, marker_color=clr)
         fig.add_trace(trace, row=1, col=1)
-
     annotation_text = ''
     # Model errors
     for ind, model in enumerate(dfs.keys()):
@@ -283,7 +276,6 @@ def draw_performance(dfs: dict,
                            f'{df_err[model]["модель"].mean():.2f}</i><br>'
         fig.add_trace(trace1, row=1, col=1)
         fig.add_trace(trace2, row=2, col=1)
-
     fig.update_xaxes(
         title_text=annotation_text,
         title_font_size=16,
@@ -316,14 +308,12 @@ def draw_statistics(
         ],
     )
     fig.layout.template = 'seaborn'
-
-    text = f'Месторождение <em>{oilfield}</em>'
-    fig.update_layout(title=dict(text=text, x=0.05, xanchor='left'), font=dict(size=10))
-
+    fig.update_layout(title=dict(text=f'Месторождение <em>{oilfield}</em>', x=0.05, xanchor='left'),
+                      font=dict(size=10),
+                      height=630)
     mark = dict(size=4)
     ml = 'markers+lines'
     colors = px.colors.qualitative.Safe
-
     # Model errors
     for ind, model in enumerate(models):
         clr = colors[ind]
@@ -335,10 +325,8 @@ def draw_statistics(
                             mode=ml, marker=mark, line=dict(width=1, color=clr))
         trace4 = go.Scatter(name=f'', x=dates, y=model_std_daily[model],
                             mode=ml, marker=mark, line=dict(width=1, color=clr))
-
         fig.add_trace(trace1, row=1, col=1)
         fig.add_trace(trace2, row=2, col=1)
         fig.add_trace(trace3, row=3, col=1)
         fig.add_trace(trace4, row=4, col=1)
-
     return fig
