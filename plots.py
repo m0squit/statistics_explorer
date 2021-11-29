@@ -176,8 +176,9 @@ def draw_performance(dfs: dict,
     m = 'markers'
     ml = 'markers+lines'
     colors = px.colors.qualitative.Safe
+    models = [model for model in dfs.keys() if not (df_perf[model]['факт'] == 0).all()]
     # сейчас факт строится по всем моделям
-    for ind, model in enumerate(dfs.keys()):
+    for ind, model in enumerate(models):
         clr = colors[ind]
         x = df_perf[model].index
         trace = go.Scatter(name=f'факт {MODEL_NAMES[model]}', x=x, y=df_perf[model]['факт'],
@@ -185,7 +186,7 @@ def draw_performance(dfs: dict,
         fig.add_trace(trace, row=1, col=1)
     annotation_text = ''
     # Model errors
-    for ind, model in enumerate(dfs.keys()):
+    for ind, model in enumerate(models):
         clr = colors[ind]
         x = df_perf[model].index
         trace1 = go.Scatter(name=f'{MODEL_NAMES[model]}', x=x, y=df_perf[model]['модель'],
