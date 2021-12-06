@@ -45,7 +45,7 @@ def create_well_plot(name: str,
     mark = dict(size=4)
     m = 'markers'
     ml = 'markers+lines'
-    colors = px.colors.qualitative.Safe
+    colors = px.colors.qualitative.Safe + px.colors.qualitative.Vivid
 
     # сейчас факт строится по всем моделям
     for ind, (model, df) in enumerate(dfs.items()):
@@ -175,7 +175,7 @@ def draw_performance(dfs: dict,
     mark = dict(size=4)
     m = 'markers'
     ml = 'markers+lines'
-    colors = px.colors.qualitative.Safe
+    colors = px.colors.qualitative.Safe + px.colors.qualitative.Vivid
     models = [model for model in dfs.keys() if not (df_perf[model]['факт'] == 0).all()]
     # сейчас факт строится по всем моделям
     for ind, model in enumerate(models):
@@ -234,7 +234,7 @@ def draw_statistics(
                       height=630)
     mark = dict(size=4)
     ml = 'markers+lines'
-    colors = px.colors.qualitative.Safe
+    colors = px.colors.qualitative.Safe + px.colors.qualitative.Vivid
     # Model errors
     for ind, model in enumerate(models):
         clr = colors[ind]
