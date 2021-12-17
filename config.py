@@ -7,6 +7,7 @@ class ConfigStatistics:
         'wolfram': 'ML',
         'ensemble': 'Ансамбль',
         'CRM': 'CRM',
+        'CRMIP': 'CRMIP',
         'true': 'Факт',
     }
 
