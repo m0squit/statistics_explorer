@@ -72,55 +72,37 @@ def draw_histogram_model(df_err: pd.DataFrame,
                          bin_size: int,
                          oilfield: str,
                          ):
-    length = len(df_err)
-    days = [length // 3, 2 * length // 3, -1]
-
-    fig = make_subplots(
-        rows=3,
-        cols=1,
-        shared_xaxes=True,
-        vertical_spacing=0.06,
-        subplot_titles=[
-            f'За {days[0]} суток',
-            f'За {days[1]} суток',
-            f'За весь период прогноза',
-        ],
-    )
+    fig = make_subplots(rows=1, cols=1)
     fig.layout.template = 'seaborn'
     fig.update_layout(
-        title_text=f'Распределение средней ошибки за n дней',
+        title_text=f'Распределение средней ошибки за весь период прогноза',
         bargap=0.005,
         font=dict(size=15),
         showlegend=False,
-        height=630,
+        height=500,
     )
 
-    for ind, day in enumerate(days):
-        x = df_err.iloc[:day].mean()
-        fig.add_trace(
-            go.Histogram(
-                x=x,
-                opacity=0.9,
-                # histnorm='percent',
-                xbins=dict(size=bin_size),
-                # nbinsx=8,
-            ),
-            row=ind + 1,
-            col=1,
-        )
-
-        fig.update_xaxes(dtick=bin_size, row=ind + 1, col=1)
-        fig.update_yaxes(title_text="Скважин", title_font_size=15, row=ind + 1, col=1)
-
-    err_all = df_err.mean()
+    x = df_err.mean()
+    fig.add_trace(
+        go.Histogram(
+            x=x,
+            opacity=0.9,
+            # histnorm='percent',
+            xbins=dict(size=bin_size),
+            # nbinsx=8,
+        ),
+        row=1,
+        col=1,
+    )
+    fig.update_xaxes(dtick=bin_size, row=1, col=1)
+    fig.update_yaxes(title_text="Скважин", title_font_size=15, row=1, col=1)
     fig.update_xaxes(
         title_text=f"Усредненная относительная ошибка, %<br><br>"
-                   f"<i>Среднее значение ошибки за весь период: <em>{err_all.mean():.2f}</i></em><br>"
-                   f"<i>Стандартное отклонение ошибки за весь период: <em>{err_all.std():.2f}</i></em><br>"
+                   f"<i>Среднее значениe: <em>{x.mean():.2f}</i></em><br>"
+                   f"<i>Стандартное отклонениe: <em>{x.std():.2f}</i></em><br>"
                    f"Месторождение: <em>{oilfield}</em>. Количество скважин: <em>{df_err.shape[1]}</em>",
         title_font_size=16,
-        row=3,
-        col=1
+        row=1, col=1
     )
     return fig
 
