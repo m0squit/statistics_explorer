@@ -8,6 +8,7 @@ class ConfigStatistics:
         'ensemble': 'Ансамбль',
         'CRM': 'CRM',
         'CRMIP': 'CRMIP',
+        'fedot': 'FEDOT',
         'true': 'Факт',
     }
 
