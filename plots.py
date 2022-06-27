@@ -216,7 +216,7 @@ def draw_statistics(
                       height=630)
     mark = dict(size=4)
     ml = 'markers+lines'
-    colors = px.colors.qualitative.Safe + px.colors.qualitative.Vivid
+    colors = px.colors.qualitative.Dark24
     # Model errors
     for ind, model in enumerate(models):
         clr = colors[ind]
@@ -232,4 +232,77 @@ def draw_statistics(
         fig.add_trace(trace2, row=2, col=1)
         fig.add_trace(trace3, row=3, col=1)
         fig.add_trace(trace4, row=4, col=1)
+    return fig
+
+def draw_wells_model_multi(df_err: pd.DataFrame, models, mode:str):
+    fig = make_subplots(
+        rows=1,
+        cols=1,
+    )
+    fig.layout.template = 'seaborn'
+    fig.update_layout(
+        title_text=f'{mode}. Средняя относит. ошибка на периоде прогноза, %',
+        # bargap=0.005,
+        font=dict(size=15),
+    )
+    title_text = f"Номер скважины<br><br>"
+    for i in range(len(models)):
+
+        mean_err = df_err[models[i]].mean(axis=0)
+        mean_err = mean_err.sort_values()
+        trace = go.Bar(x=mean_err.index, y=mean_err, opacity=1-i/10, name=models[i])
+        fig.add_trace(trace, row=1, col=1)
+
+        title_text += "\n" + f"<i>Среднее значение ошибки {models[i]}: <em>{mean_err.mean():.2f}</em></i>"
+
+    fig.update_layout(barmode='overlay')
+    fig.update_xaxes(title_text=title_text, row=1, col=1)
+    fig.update_yaxes(title_text="Относит. ошибка, %", row=1, col=1)
+    return fig
+
+
+
+def draw_histogram_model_multi(df_err: pd.DataFrame,
+                         bin_size: int,
+                         oilfield: str,
+                        models,
+                        mode: str
+                         ):
+    fig = make_subplots(rows=1, cols=1)
+    fig.layout.template = 'seaborn'
+    fig.update_layout(
+        title_text=f'{mode}. Распределение средней ошибки за весь период прогноза',
+        bargap=0.005,
+        font=dict(size=15),
+        showlegend=True,
+        height=500,
+    )
+    title_text=f"Усредненная относительная ошибка, %<br><br>"
+    for i in range(len(models)):
+        x = df_err[models[i]].mean()
+        fig.add_trace(
+            go.Histogram(
+                x=x,
+                opacity=1-i/10,
+                # histnorm='percent',
+                xbins=dict(size=bin_size),
+                # nbinsx=8,
+                name=models[i],
+                showlegend=True
+            ),
+            row=1,
+            col=1,
+        )
+        title_text += "\n" + f"<i>Среднее значениe {models[i]}: <em>{x.mean():.2f}</i></em><br>" + "\n" + \
+                         f"<i>Стандартное отклонениe {models[i]}: <em>{x.std():.2f}</i></em><br>"
+
+    fig.update_layout(barmode='overlay')
+    fig.update_xaxes(dtick=bin_size, row=1, col=1)
+    fig.update_yaxes(title_text="Скважин", title_font_size=15, row=1, col=1)
+    fig.update_xaxes(
+        title_text=title_text+"\n"
+                   f"Месторождение: <em>{oilfield}</em>. Количество скважин: <em>{df_err[models[i]].shape[1]}</em>",
+        title_font_size=16,
+        row=1, col=1
+    )
     return fig
