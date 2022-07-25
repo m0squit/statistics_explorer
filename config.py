@@ -3,13 +3,16 @@ from pandas import date_range
 
 class ConfigStatistics:
     MODEL_NAMES = {
-        'ftor': 'Пьезо',
-        'wolfram': 'ML',
-        'ensemble': 'Ансамбль',
-        'CRM': 'CRM',
-        'CRMIP': 'CRMIP',
-        'fedot': 'FEDOT',
-        'true': 'Факт',
+        "ftor": "Пьезо",
+        "wolfram": "ML",
+        "ensemble": "Ансамбль",
+        "CRM": "CRM",
+        "CRMIP": "CRMIP",
+        "fedot": "FEDOT",
+        "true": "Факт",
+        "Hybrid": "Hybrid",
+        "Syntetic": "Syntetic",
+        "Шельф": "Шельф",
     }
 
     ignore_plots = [
@@ -34,4 +37,6 @@ class ConfigStatistics:
         self.well_names = well_names
 
     def exclude_wells(self, exclude_wells: list):
-        self.well_names = [elem for elem in self.well_names if elem not in exclude_wells]
+        self.well_names = [
+            elem for elem in self.well_names if elem not in exclude_wells
+        ]

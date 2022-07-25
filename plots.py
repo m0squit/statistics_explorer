@@ -1,38 +1,39 @@
-import pandas as pd
+from collections import defaultdict
+from itertools import combinations
+
 import numpy as np
-import plotly.graph_objects as go
+import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 
-def calc_relative_error(y_true: pd.Series,
-                        y_pred: pd.Series,
-                        use_abs: bool = True) -> pd.Series:
+def calc_relative_error(
+        y_true: pd.Series, y_pred: pd.Series, use_abs: bool = True
+) -> pd.Series:
     if use_abs:
-        err = np.abs(y_pred - y_true) / np.maximum(y_pred, y_true)
+        # TODO: разобраться с расчётом ошибки
+        err = np.abs(y_pred - y_true) / y_true  # np.maximum(y_pred, y_true)
     else:
-        err = (y_pred - y_true) / np.maximum(y_pred, y_true)
+        err = (y_pred - y_true) / y_true  # np.maximum(y_pred, y_true)
     # Ошибка может быть больше 100%, если одно из значений отрицательное. Исключаем такие случаи.
     err[err > 1] = 1
     err[err < -1] = -1
     return err * 100
 
 
-def create_well_plot(name: str,
-                     dfs: dict,
-                     oilfield: str,
-                     mode: str = 'oil'):
+def create_well_plot(name: str, dfs: dict, oilfield: str, mode: str = "oil"):
     fig = make_subplots(
         rows=2,
         cols=1,
         shared_xaxes=True,
         vertical_spacing=0.07,
         subplot_titles=[
-            f'Дебит: {mode}, м3',
-            'Относительная ошибка, %',
-        ]
+            f"Дебит: {mode}, м3",
+            "Относительная ошибка, %",
+        ],
     )
-    fig.layout.template = 'seaborn'
+    fig.layout.template = "seaborn"
     fig.update_layout(
         font=dict(size=15),
         title_text=f'Скважина "{name}"; {oilfield};',
@@ -43,39 +44,56 @@ def create_well_plot(name: str,
     )
 
     mark = dict(size=4)
-    m = 'markers'
-    ml = 'markers+lines'
-    colors = px.colors.qualitative.Safe + px.colors.qualitative.Vivid
+    m = "markers"
+    ml = "markers+lines"
+    colors = px.colors.qualitative.Dark24
 
     # сейчас факт строится по всем моделям
     for ind, (model, df) in enumerate(dfs.items()):
-        if f'{name}_{mode}_pred' in df.columns:
+        if f"{name}_{mode}_pred" in df.columns:
             clr = colors[ind]
 
-            trace = go.Scatter(name=f'факт_{model}', x=df.index, y=df[f'{name}_{mode}_true'],
-                               mode=m, marker=mark, marker_color=clr)
+            trace = go.Scatter(
+                name=f"факт_{model}",
+                x=df.index,
+                y=df[f"{name}_{mode}_true"],
+                mode=m,
+                marker=mark,
+                marker_color=clr,
+            )
             fig.add_trace(trace, row=1, col=1)
 
-            trace = go.Scatter(name=model, x=df.index, y=df[f'{name}_{mode}_pred'],
-                               mode=ml, marker=mark, line=dict(width=1, color=clr))
+            trace = go.Scatter(
+                name=model,
+                x=df.index,
+                y=df[f"{name}_{mode}_pred"],
+                mode=ml,
+                marker=mark,
+                line=dict(width=1, color=clr),
+            )
             fig.add_trace(trace, row=1, col=1)
 
-            relative_error = calc_relative_error(df[f'{name}_{mode}_true'], df[f'{name}_{mode}_pred'], use_abs=False)
-            trace = go.Scatter(name=f're_{model}', x=df.index, y=relative_error,
-                               mode=ml, marker=mark, line=dict(width=1, color=clr),
-                               showlegend=False)
+            relative_error = calc_relative_error(
+                df[f"{name}_{mode}_true"], df[f"{name}_{mode}_pred"], use_abs=True
+            )
+            trace = go.Scatter(
+                name=f"re_{model}",
+                x=df.index,
+                y=relative_error,
+                mode=ml,
+                marker=mark,
+                line=dict(width=1, color=clr),
+                showlegend=False,
+            )
             fig.add_trace(trace, row=2, col=1)
     return fig
 
 
-def draw_histogram_model(df_err: pd.DataFrame,
-                         bin_size: int,
-                         oilfield: str,
-                         ):
+def draw_histogram_model(df_err: pd.DataFrame, bin_size: int, oilfield: str, mode: str):
     fig = make_subplots(rows=1, cols=1)
-    fig.layout.template = 'seaborn'
+    fig.layout.template = "seaborn"
     fig.update_layout(
-        title_text=f'Распределение средней ошибки за весь период прогноза',
+        title_text=f"{mode}. Распределение средней ошибки за весь период прогноза",
         bargap=0.005,
         font=dict(size=15),
         showlegend=False,
@@ -102,19 +120,20 @@ def draw_histogram_model(df_err: pd.DataFrame,
                    f"<i>Стандартное отклонениe: <em>{x.std():.2f}</i></em><br>"
                    f"Месторождение: <em>{oilfield}</em>. Количество скважин: <em>{df_err.shape[1]}</em>",
         title_font_size=16,
-        row=1, col=1
+        row=1,
+        col=1,
     )
     return fig
 
 
-def draw_wells_model(df_err_model: pd.DataFrame):
+def draw_wells_model(df_err_model: pd.DataFrame, mode: str):
     fig = make_subplots(
         rows=1,
         cols=1,
     )
-    fig.layout.template = 'seaborn'
+    fig.layout.template = "seaborn"
     fig.update_layout(
-        title_text=f'Средняя относит. ошибка на периоде прогноза, %',
+        title_text=f"{mode}. Средняя относит. ошибка на периоде прогноза, %",
         # bargap=0.005,
         font=dict(size=15),
     )
@@ -124,67 +143,98 @@ def draw_wells_model(df_err_model: pd.DataFrame):
     trace = go.Bar(x=mean_err.index, y=mean_err)
     fig.add_trace(trace, row=1, col=1)
 
-    fig.update_xaxes(title_text=f"Номер скважины<br><br>"
-                                f"<i>Среднее значение ошибки: <em>{mean_err.mean():.2f}</em></i>", row=1, col=1)
+    fig.update_xaxes(
+        title_text=f"Номер скважины<br><br>"
+                   f"<i>Среднее значение ошибки: <em>{mean_err.mean():.2f}</em></i>",
+        row=1,
+        col=1,
+    )
     fig.update_yaxes(title_text="Относит. ошибка, %", row=1, col=1)
     return fig
 
 
-def draw_performance(dfs: dict,
-                     df_perf: dict,
-                     df_err: dict,
-                     oilfield: str,
-                     MODEL_NAMES: dict,
-                     mode='oil'):
+def draw_performance(
+        dfs: dict, df_perf: dict, df_err: dict, oilfield: str, MODEL_NAMES: dict, mode="oil"
+):
     modes_decode = {
-        'oil': 'нефти',
-        'liq': 'жидкости',
+        "oil": "нефти",
+        "liq": "жидкости",
     }
     fig = make_subplots(
         rows=2,
         cols=1,
         shared_xaxes=True,
         vertical_spacing=0.05,
-        subplot_titles=[f'Суммарная суточная добыча {modes_decode[mode]}, м3',
-                        'Относительное отклонение от факта, %'],
+        subplot_titles=[
+            f"Суммарная суточная добыча {modes_decode[mode]}, м3/сут",
+            "Относительное отклонение от факта, %",
+        ],
     )
-    fig.layout.template = 'seaborn'
+    fig.layout.template = "seaborn"
     fig.update_layout(
-        title=dict(text=f'Месторождение {oilfield}', x=0.05, xanchor='left'),
+        title=dict(text=f"Месторождение {oilfield}", x=0.05, xanchor="left"),
         font=dict(size=10),
         legend=dict(font=dict(size=15)),
-        height=630)
-    mark = dict(size=4)
-    m = 'markers'
-    ml = 'markers+lines'
-    colors = px.colors.qualitative.Safe + px.colors.qualitative.Vivid
-    models = [model for model in dfs.keys() if not (df_perf[model]['факт'] == 0).all()]
-    # сейчас факт строится по всем моделям
-    for ind, model in enumerate(models):
-        clr = colors[ind]
-        x = df_perf[model].index
-        trace = go.Scatter(name=f'факт {MODEL_NAMES[model]}', x=x, y=df_perf[model]['факт'],
-                           mode=m, marker=mark, marker_color=clr)
+        height=630,
+    )
+    mark = dict(size=6)
+
+    colors = px.colors.qualitative.Dark24
+    models = [model for model in dfs.keys() if not (df_perf[model]["факт"] == 0).all()]
+    # сортировка моделей, у которых факт совпадает
+    models_count = defaultdict(int)
+    for combination in list(combinations(models, 2)):
+        if df_perf[combination[0]]["факт"].equals(df_perf[combination[1]]["факт"]):
+            models_count[combination[0]] += 1
+            models_count[combination[1]] += 1
+    models_same = defaultdict(list)
+    for model, values in models_count.items():
+        models_same[values].append(model)
+    # построение факта
+    for ind, model in models_same.items():
+        clr = colors[-ind]
+        x = df_perf[model[0]].index
+        if len(models_same) == 1:
+            name_legend = f"Факт"
+        else:
+            name_legend = f"Факт {model}"
+        trace = go.Scatter(
+            name=name_legend,
+            x=x,
+            y=df_perf[model[0]]["факт"],
+            mode="markers",
+            marker=mark,
+            marker_color=clr,
+            showlegend=True,
+        )
         fig.add_trace(trace, row=1, col=1)
-    annotation_text = ''
+    annotation_text = ""
     # Model errors
     for ind, model in enumerate(models):
         clr = colors[ind]
         x = df_perf[model].index
-        trace1 = go.Scatter(name=f'{MODEL_NAMES[model]}', x=x, y=df_perf[model]['модель'],
-                            mode=ml, marker=mark, line=dict(width=1, color=clr))
-        trace2 = go.Scatter(name=f'ERR: {MODEL_NAMES[model]}', x=x, y=df_err[model]['модель'],
-                            mode=ml, marker=mark, line=dict(width=1, color=clr))
-        annotation_text += f'<i>Среднее значение ошибки <em>{MODEL_NAMES[model]}</em>: ' \
-                           f'{df_err[model]["модель"].mean():.2f}</i><br>'
+        trace1 = go.Scatter(
+            name=f"{MODEL_NAMES[model]}",
+            x=x,
+            y=df_perf[model]["модель"],
+            mode="lines",
+            line=dict(width=2, color=clr),
+        )
+        trace2 = go.Scatter(
+            x=x,
+            y=df_err[model]["модель"],
+            mode="markers+lines",
+            marker=mark,
+            line=dict(width=2, color=clr),
+            showlegend=False,
+        )
+        annotation_text += (
+            f"<i>Среднее значение ошибки <em>{MODEL_NAMES[model]}</em>: "
+            f'{df_err[model]["модель"].mean():.2f}</i><br>'
+        )
         fig.add_trace(trace1, row=1, col=1)
         fig.add_trace(trace2, row=2, col=1)
-    fig.update_xaxes(
-        title_text=annotation_text,
-        title_font_size=16,
-        row=2,
-        col=1
-    )
+    fig.update_xaxes(title_text=annotation_text, title_font_size=16, row=2, col=1)
     return fig
 
 
@@ -197,6 +247,7 @@ def draw_statistics(
         oilfield: str,
         dates: pd.date_range,
         MODEL_NAMES: dict,
+        mode: str,
 ):
     fig = make_subplots(
         rows=4,
@@ -204,105 +255,145 @@ def draw_statistics(
         shared_xaxes=True,
         vertical_spacing=0.05,
         subplot_titles=[
-            'Средняя относит. ошибка по накопленной добыче, %',
-            'Стандартное отклонение по накопленной добыче, %',
-            'Средняя относит. ошибка суточной добычи, %',
-            'Стандартное отклонение по суточной добыче, %',
+            "Средняя относит. ошибка по накопленной добыче, %",
+            "Стандартное отклонение по накопленной добыче, %",
+            "Средняя относит. ошибка суточной добычи, %",
+            "Стандартное отклонение по суточной добыче, %",
         ],
     )
-    fig.layout.template = 'seaborn'
-    fig.update_layout(title=dict(text=f'Месторождение <em>{oilfield}</em>', x=0.05, xanchor='left'),
-                      font=dict(size=10),
-                      height=630)
+    fig.layout.template = "seaborn"
+    fig.update_layout(
+        title=dict(
+            text=f"Месторождение <em>{oilfield}</em>. {mode}", x=0.05, xanchor="left"
+        ),
+        font=dict(size=10),
+        height=630,
+    )
     mark = dict(size=4)
-    ml = 'markers+lines'
+    ml = "markers+lines"
     colors = px.colors.qualitative.Dark24
     # Model errors
     for ind, model in enumerate(models):
         clr = colors[ind]
-        trace1 = go.Scatter(name=f'{MODEL_NAMES[model]}', x=dates, y=model_mean[model], mode=ml,
-                            marker=mark, line=dict(width=1, color=clr))
-        trace2 = go.Scatter(name='', x=dates, y=model_std[model], mode=ml,
-                            marker=mark, line=dict(width=1, color=clr))
-        trace3 = go.Scatter(name=f'', x=dates, y=model_mean_daily[model],
-                            mode=ml, marker=mark, line=dict(width=1, color=clr))
-        trace4 = go.Scatter(name=f'', x=dates, y=model_std_daily[model],
-                            mode=ml, marker=mark, line=dict(width=1, color=clr))
+        trace1 = go.Scatter(
+            name=f"{MODEL_NAMES[model]}",
+            x=dates,
+            y=model_mean[model],
+            mode=ml,
+            marker=mark,
+            line=dict(width=1, color=clr),
+        )
+        trace2 = go.Scatter(
+            x=dates,
+            y=model_std[model],
+            mode=ml,
+            marker=mark,
+            line=dict(width=1, color=clr),
+            showlegend=False,
+        )
+        trace3 = go.Scatter(
+            x=dates,
+            y=model_mean_daily[model],
+            mode=ml,
+            marker=mark,
+            line=dict(width=1, color=clr),
+            showlegend=False,
+        )
+        trace4 = go.Scatter(
+            x=dates,
+            y=model_std_daily[model],
+            mode=ml,
+            marker=mark,
+            line=dict(width=1, color=clr),
+            showlegend=False,
+        )
         fig.add_trace(trace1, row=1, col=1)
         fig.add_trace(trace2, row=2, col=1)
         fig.add_trace(trace3, row=3, col=1)
         fig.add_trace(trace4, row=4, col=1)
     return fig
 
-def draw_wells_model_multi(df_err: pd.DataFrame, models, mode:str):
+
+# бары с ошибками по скважинам
+def draw_wells_model_multi(df_err: pd.DataFrame, models: list, mode: str):
     fig = make_subplots(
         rows=1,
         cols=1,
     )
-    fig.layout.template = 'seaborn'
+    fig.layout.template = "seaborn"
     fig.update_layout(
-        title_text=f'{mode}. Средняя относит. ошибка на периоде прогноза, %',
+        title_text=f"{mode}. Средняя относит. ошибка на периоде прогноза, %",
         # bargap=0.005,
         font=dict(size=15),
     )
     title_text = f"Номер скважины<br><br>"
-    for i in range(len(models)):
-
-        mean_err = df_err[models[i]].mean(axis=0)
+    # Сортировка начиная со скважин с большей ошибкой. Для лучшей визуализации
+    models_dict = {}
+    for model in models:
+        if mode == "Дебит нефти" and model == "CRM":
+            continue
+        models_dict[model] = df_err[model].mean(axis=0).mean()
+    models_dict = dict(sorted(models_dict.items(), key=lambda x: x[1], reverse=True))
+    models_name = list(models_dict.keys())
+    for i in range(len(models_name)):
+        mean_err = df_err[models_name[i]].mean(axis=0)
         mean_err = mean_err.sort_values()
-        trace = go.Bar(x=mean_err.index, y=mean_err, opacity=1-i/10, name=models[i])
+        trace = go.Bar(
+            x=mean_err.index, y=mean_err, opacity=1 - i / 10, name=models_name[i]
+        )
         fig.add_trace(trace, row=1, col=1)
+        title_text += f"<i>Среднее значениe {models_name[i]}: <em>{mean_err.mean():.2f}</i></em><br>"
 
-        title_text += "\n" + f"<i>Среднее значение ошибки {models[i]}: <em>{mean_err.mean():.2f}</em></i>"
-
-    fig.update_layout(barmode='overlay')
-    fig.update_xaxes(title_text=title_text, row=1, col=1)
+    fig.update_layout(barmode="overlay")
+    fig.update_xaxes(title_text=title_text, title_font_size=16, row=1, col=1)
     fig.update_yaxes(title_text="Относит. ошибка, %", row=1, col=1)
     return fig
 
 
-
-def draw_histogram_model_multi(df_err: pd.DataFrame,
-                         bin_size: int,
-                         oilfield: str,
-                        models,
-                        mode: str
-                         ):
+# гистограмма распределения ошибки
+def draw_histogram_model_multi(
+        df_err: pd.DataFrame, bin_size: int, oilfield: str, models: list, mode: str
+):
     fig = make_subplots(rows=1, cols=1)
-    fig.layout.template = 'seaborn'
+    fig.layout.template = "seaborn"
     fig.update_layout(
-        title_text=f'{mode}. Распределение средней ошибки за весь период прогноза',
+        title_text=f"{mode}. Распределение средней ошибки за весь период прогноза",
         bargap=0.005,
         font=dict(size=15),
         showlegend=True,
         height=500,
     )
-    title_text=f"Усредненная относительная ошибка, %<br><br>"
+    title_text = f"Усредненная относительная ошибка, %<br><br>"
     for i in range(len(models)):
+        if mode == "Дебит нефти" and models[i] == "CRM":
+            continue
         x = df_err[models[i]].mean()
         fig.add_trace(
             go.Histogram(
                 x=x,
-                opacity=1-i/10,
+                opacity=1 - i / 10,
                 # histnorm='percent',
                 xbins=dict(size=bin_size),
                 # nbinsx=8,
                 name=models[i],
-                showlegend=True
+                showlegend=True,
             ),
             row=1,
             col=1,
         )
-        title_text += "\n" + f"<i>Среднее значениe {models[i]}: <em>{x.mean():.2f}</i></em><br>" + "\n" + \
-                         f"<i>Стандартное отклонениe {models[i]}: <em>{x.std():.2f}</i></em><br>"
+        title_text += (
+                f"<i>Среднее значениe {models[i]}: <em>{x.mean():.2f}</i></em><br>"
+                + f"<i>Стандартное отклонениe {models[i]}: <em>{x.std():.2f}</i></em><br>"
+        )
 
-    fig.update_layout(barmode='overlay')
+    fig.update_layout(barmode="overlay")
     fig.update_xaxes(dtick=bin_size, row=1, col=1)
     fig.update_yaxes(title_text="Скважин", title_font_size=15, row=1, col=1)
     fig.update_xaxes(
-        title_text=title_text+"\n"
-                   f"Месторождение: <em>{oilfield}</em>. Количество скважин: <em>{df_err[models[i]].shape[1]}</em>",
+        title_text=title_text + "\n"
+                                f"Месторождение: <em>{oilfield}</em>. Количество скважин: <em>{df_err[models[i]].shape[1]}</em>",
         title_font_size=16,
-        row=1, col=1
+        row=1,
+        col=1,
     )
     return fig
