@@ -4,8 +4,8 @@ from pathlib import Path
 import pandas as pd
 import plotly as pl
 
-from config import ConfigStatistics
-from plots import (
+from statistics_explorer.config import ConfigStatistics
+from statistics_explorer.plots import (
     calc_relative_error,
     create_well_plot,
     draw_histogram_model,
