@@ -10,6 +10,7 @@ class ConfigStatistics:
         'CRMIP': 'CRMIP',
         'fedot': 'FEDOT',
         'true': 'Факт',
+        'shelf': 'ППТП'
     }
 
     ignore_plots = [
