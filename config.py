@@ -8,11 +8,11 @@ class ConfigStatistics:
         "ensemble": "Ансамбль",
         "CRM": "CRM",
         "CRMIP": "CRMIP",
-        "fedot": "FEDOT",
+        "fedot": "CRM+ML",
         "true": "Факт",
         "Hybrid": "Hybrid",
         "Syntetic": "Syntetic",
-        "Шельф": "Шельф",
+        "shelf": "ППТП",
     }
 
     ignore_plots = [
