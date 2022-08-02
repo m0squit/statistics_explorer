@@ -129,19 +129,33 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
 
     temp_name = f'Ошибка прогноза (нефть) "{models}"'
     analytics_plots[temp_name] = draw_wells_model_multi(
-        df_err_model, models, "Дебит нефти"
+        df_err_model, models, config.MODEL_NAMES, "Дебит нефти"
     )
-    temp_name_multi_oil = f"Распределение ошибки (нефть) {models}"
+    temp_name_multi_oil = (
+        f"Распределение ошибки (нефть) {list(config.MODEL_NAMES.values())}"
+    )
     analytics_plots[temp_name_multi_oil] = draw_histogram_model_multi(
-        df_err_model, config.bin_size, config.oilfield, models, "Дебит нефти"
+        df_err_model,
+        config.bin_size,
+        config.oilfield,
+        models,
+        config.MODEL_NAMES,
+        "Дебит нефти",
     )
-    temp_name = f'Ошибка прогноза (жидкость) "{models}"'
+    temp_name = f'Ошибка прогноза (жидкость) "{list(config.MODEL_NAMES.values())}"'
     analytics_plots[temp_name] = draw_wells_model_multi(
-        df_err_model_liq, models, "Дебит жидкости"
+        df_err_model_liq, models, config.MODEL_NAMES, "Дебит жидкости"
     )
-    temp_name_multi_liq = f"Распределение ошибки (жидкость) {models}"
+    temp_name_multi_liq = (
+        f"Распределение ошибки (жидкость) {list(config.MODEL_NAMES.values())}"
+    )
     analytics_plots[temp_name_multi_liq] = draw_histogram_model_multi(
-        df_err_model_liq, config.bin_size, config.oilfield, models, "Дебит жидкости"
+        df_err_model_liq,
+        config.bin_size,
+        config.oilfield,
+        models,
+        config.MODEL_NAMES,
+        "Дебит жидкости",
     )
     # Draw common statistics
     analytics_plots["Суммарная добыча нефти"] = draw_performance(
@@ -181,22 +195,22 @@ if __name__ == "__main__":
     config_stats = ConfigStatistics(
         oilfield="Отдельное",
         dates=pd.date_range(
-            datetime.date(2022, 2, 1), datetime.date(2022, 3, 31), freq="D"
+            datetime.date(2022, 2, 1), datetime.date(2022, 4, 30), freq="D"
         ).date,
         use_abs=True,
         bin_size=10,
     )
     # Задание имен моделей на графиках. Ключ - название .xlsx файла, значение - название на графике.
     config_stats.MODEL_NAMES = {
-        "Piezo": "Пьезо",
-        "ML": "ML",
+        "ftor": "Пьезо",
+        "wolfram": "ML",
+        "ensemble": "Ансамбль",
         "CRM": "CRM",
-        "Fedot": "Fedot",
-        "Ансамбль": "Ансамбль",
-        "ППТП": "ППТП",
+        "fedot": "CRM+ML",
+        "shelf": "ППТП",
     }
-    path_read = Path.cwd() / "input_data" / config_stats.oilfield
-    path_save = Path.cwd() / "output" / config_stats.oilfield
+    path_read = Path.cwd() / config_stats.oilfield / "input_data"
+    path_save = Path.cwd() / config_stats.oilfield / "output_data"
 
     # %% Read data
     # Store dataframes of each model
@@ -233,20 +247,20 @@ if __name__ == "__main__":
     ]
 
     # Сохранение поскважинных графиков
-    for mode in ["liq", "oil"]:
-        if not Path(f"{path_save}/well plots/{mode}").exists():
-            Path(f"{path_save}/well plots/{mode}").mkdir(parents=True, exist_ok=True)
-        for name in config_stats.well_names:
-            fig = create_well_plot(name, dfs, oilfield=config_stats.oilfield, mode=mode)
-            pl.io.write_image(
-                fig,
-                file=f"{path_save}/well plots/{mode}/{name}.png",
-                width=1450,
-                height=700,
-                scale=2,
-                engine="kaleido",
-            )
-    fig.write_html(f"{path_save}/well plots/{mode}/{name}.html")
+    # for mode in ["liq", "oil"]:
+    #     if not Path(f"{path_save}/well plots/{mode}").exists():
+    #         Path(f"{path_save}/well plots/{mode}").mkdir(parents=True, exist_ok=True)
+    #     for name in config_stats.well_names:
+    #         fig = create_well_plot(name, dfs, oilfield=config_stats.oilfield, mode=mode)
+    #         pl.io.write_image(
+    #             fig,
+    #             file=f"{path_save}/well plots/{mode}/{name}.png",
+    #             width=1450,
+    #             height=700,
+    #             scale=2,
+    #             engine="kaleido",
+    #         )
+    # fig.write_html(f"{path_save}/well plots/{mode}/{name}.html")
 
     # Сохранение графиков статистики
     for plot_name in plots_to_save:

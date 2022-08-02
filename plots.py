@@ -187,6 +187,7 @@ def draw_performance(
         if df_perf[combination[0]]["факт"].equals(df_perf[combination[1]]["факт"]):
             models_count[combination[0]] += 1
             models_count[combination[1]] += 1
+    # словарь с одинаковыми фактами
     models_same = defaultdict(list)
     for model, values in models_count.items():
         models_same[values].append(model)
@@ -217,7 +218,7 @@ def draw_performance(
             name=f"{MODEL_NAMES[model]}",
             x=x,
             y=df_perf[model]["модель"],
-            mode="lines",
+            mode="markers+lines",
             line=dict(width=2, color=clr),
         )
         trace2 = go.Scatter(
@@ -269,11 +270,13 @@ def draw_statistics(
         font=dict(size=10),
         height=630,
     )
-    mark = dict(size=4)
+    mark = dict(size=6)
     ml = "markers+lines"
     colors = px.colors.qualitative.Dark24
     # Model errors
     for ind, model in enumerate(models):
+        if MODEL_NAMES[model] == "CRM" and mode == "Дебит нефти":
+            continue
         clr = colors[ind]
         trace1 = go.Scatter(
             name=f"{MODEL_NAMES[model]}",
@@ -315,7 +318,9 @@ def draw_statistics(
 
 
 # бары с ошибками по скважинам
-def draw_wells_model_multi(df_err: pd.DataFrame, models: list, mode: str):
+def draw_wells_model_multi(
+        df_err: pd.DataFrame, models: list, MODEL_NAMES: dict, mode: str
+):
     fig = make_subplots(
         rows=1,
         cols=1,
@@ -330,7 +335,7 @@ def draw_wells_model_multi(df_err: pd.DataFrame, models: list, mode: str):
     # Сортировка начиная со скважин с большей ошибкой. Для лучшей визуализации
     models_dict = {}
     for model in models:
-        if mode == "Дебит нефти" and model == "CRM":
+        if mode == "Дебит нефти" and MODEL_NAMES[model] == "CRM":
             continue
         models_dict[model] = df_err[model].mean(axis=0).mean()
     models_dict = dict(sorted(models_dict.items(), key=lambda x: x[1], reverse=True))
@@ -339,10 +344,13 @@ def draw_wells_model_multi(df_err: pd.DataFrame, models: list, mode: str):
         mean_err = df_err[models_name[i]].mean(axis=0)
         mean_err = mean_err.sort_values()
         trace = go.Bar(
-            x=mean_err.index, y=mean_err, opacity=1 - i / 10, name=models_name[i]
+            x=mean_err.index,
+            y=mean_err,
+            opacity=1 - i / 10,
+            name=MODEL_NAMES[models_name[i]],
         )
         fig.add_trace(trace, row=1, col=1)
-        title_text += f"<i>Среднее значениe {models_name[i]}: <em>{mean_err.mean():.2f}</i></em><br>"
+        title_text += f"<i>Среднее значениe {MODEL_NAMES[models_name[i]]}: <em>{mean_err.mean():.2f}</i></em><br>"
 
     fig.update_layout(barmode="overlay")
     fig.update_xaxes(title_text=title_text, title_font_size=16, row=1, col=1)
@@ -352,7 +360,12 @@ def draw_wells_model_multi(df_err: pd.DataFrame, models: list, mode: str):
 
 # гистограмма распределения ошибки
 def draw_histogram_model_multi(
-        df_err: pd.DataFrame, bin_size: int, oilfield: str, models: list, mode: str
+        df_err: pd.DataFrame,
+        bin_size: int,
+        oilfield: str,
+        models: list,
+        MODEL_NAMES: dict,
+        mode: str,
 ):
     fig = make_subplots(rows=1, cols=1)
     fig.layout.template = "seaborn"
@@ -365,7 +378,7 @@ def draw_histogram_model_multi(
     )
     title_text = f"Усредненная относительная ошибка, %<br><br>"
     for i in range(len(models)):
-        if mode == "Дебит нефти" and models[i] == "CRM":
+        if mode == "Дебит нефти" and MODEL_NAMES[models[i]] == "CRM":
             continue
         x = df_err[models[i]].mean()
         fig.add_trace(
@@ -375,15 +388,15 @@ def draw_histogram_model_multi(
                 # histnorm='percent',
                 xbins=dict(size=bin_size),
                 # nbinsx=8,
-                name=models[i],
+                name=MODEL_NAMES[models[i]],
                 showlegend=True,
             ),
             row=1,
             col=1,
         )
         title_text += (
-                f"<i>Среднее значениe {models[i]}: <em>{x.mean():.2f}</i></em><br>"
-                + f"<i>Стандартное отклонениe {models[i]}: <em>{x.std():.2f}</i></em><br>"
+                f"<i>Среднее значениe {MODEL_NAMES[models[i]]}: <em>{x.mean():.2f}</i></em><br>"
+                + f"<i>Стандартное отклонениe {MODEL_NAMES[models[i]]}: <em>{x.std():.2f}</i></em><br>"
         )
 
     fig.update_layout(barmode="overlay")
