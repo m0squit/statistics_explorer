@@ -127,13 +127,11 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
             df_err_model_liq[model], "Дебит жидкости"
         )
 
-    temp_name = f'Ошибка прогноза (нефть) "{models}"'
+    temp_name = f"Ошибка прогноза (нефть) сравнение моделей"
     analytics_plots[temp_name] = draw_wells_model_multi(
         df_err_model, models, config.MODEL_NAMES, "Дебит нефти"
     )
-    temp_name_multi_oil = (
-        f"Распределение ошибки (нефть) {list(config.MODEL_NAMES.values())}"
-    )
+    temp_name_multi_oil = f"Распределение ошибки (нефть) сравнение моделей"
     analytics_plots[temp_name_multi_oil] = draw_histogram_model_multi(
         df_err_model,
         config.bin_size,
@@ -142,13 +140,11 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
         config.MODEL_NAMES,
         "Дебит нефти",
     )
-    temp_name = f'Ошибка прогноза (жидкость) "{list(config.MODEL_NAMES.values())}"'
+    temp_name = f"Ошибка прогноза (жидкость) сравнение моделей"
     analytics_plots[temp_name] = draw_wells_model_multi(
         df_err_model_liq, models, config.MODEL_NAMES, "Дебит жидкости"
     )
-    temp_name_multi_liq = (
-        f"Распределение ошибки (жидкость) {list(config.MODEL_NAMES.values())}"
-    )
+    temp_name_multi_liq = f"Распределение ошибки (жидкость) сравнение моделей"
     analytics_plots[temp_name_multi_liq] = draw_histogram_model_multi(
         df_err_model_liq,
         config.bin_size,
