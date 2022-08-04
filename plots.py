@@ -198,7 +198,7 @@ def draw_performance(
         if len(models_same) == 1:
             name_legend = f"Факт"
         else:
-            name_legend = f"Факт {model}"
+            name_legend = f"Факт {[MODEL_NAMES[m] for m in model]}"
         trace = go.Scatter(
             name=name_legend,
             x=x,
@@ -235,7 +235,7 @@ def draw_performance(
         )
         fig.add_trace(trace1, row=1, col=1)
         fig.add_trace(trace2, row=2, col=1)
-    fig.update_xaxes(title_text=annotation_text, title_font_size=16, row=2, col=1)
+    # fig.update_xaxes(title_text=annotation_text, title_font_size=16, row=2, col=1)
     return fig
 
 
@@ -251,15 +251,15 @@ def draw_statistics(
         mode: str,
 ):
     fig = make_subplots(
-        rows=4,
+        rows=2,
         cols=1,
         shared_xaxes=True,
         vertical_spacing=0.05,
         subplot_titles=[
             "Средняя относит. ошибка по накопленной добыче, %",
-            "Стандартное отклонение по накопленной добыче, %",
+            # "Стандартное отклонение по накопленной добыче, %",
             "Средняя относит. ошибка суточной добычи, %",
-            "Стандартное отклонение по суточной добыче, %",
+            # "Стандартное отклонение по суточной добыче, %",
         ],
     )
     fig.layout.template = "seaborn"
@@ -286,14 +286,14 @@ def draw_statistics(
             marker=mark,
             line=dict(width=1, color=clr),
         )
-        trace2 = go.Scatter(
-            x=dates,
-            y=model_std[model],
-            mode=ml,
-            marker=mark,
-            line=dict(width=1, color=clr),
-            showlegend=False,
-        )
+        # trace2 = go.Scatter(
+        #     x=dates,
+        #     y=model_std[model],
+        #     mode=ml,
+        #     marker=mark,
+        #     line=dict(width=1, color=clr),
+        #     showlegend=False,
+        # )
         trace3 = go.Scatter(
             x=dates,
             y=model_mean_daily[model],
@@ -302,18 +302,18 @@ def draw_statistics(
             line=dict(width=1, color=clr),
             showlegend=False,
         )
-        trace4 = go.Scatter(
-            x=dates,
-            y=model_std_daily[model],
-            mode=ml,
-            marker=mark,
-            line=dict(width=1, color=clr),
-            showlegend=False,
-        )
+        # trace4 = go.Scatter(
+        #     x=dates,
+        #     y=model_std_daily[model],
+        #     mode=ml,
+        #     marker=mark,
+        #     line=dict(width=1, color=clr),
+        #     showlegend=False,
+        # )
         fig.add_trace(trace1, row=1, col=1)
-        fig.add_trace(trace2, row=2, col=1)
-        fig.add_trace(trace3, row=3, col=1)
-        fig.add_trace(trace4, row=4, col=1)
+        # fig.add_trace(trace2, row=2, col=1)
+        fig.add_trace(trace3, row=2, col=1)
+        # fig.add_trace(trace4, row=4, col=1)
     return fig
 
 
@@ -353,7 +353,7 @@ def draw_wells_model_multi(
         title_text += f"<i>Среднее значениe {MODEL_NAMES[models_name[i]]}: <em>{mean_err.mean():.2f}</i></em><br>"
 
     fig.update_layout(barmode="overlay")
-    fig.update_xaxes(title_text=title_text, title_font_size=16, row=1, col=1)
+    # fig.update_xaxes(title_text=title_text, title_font_size=16, row=1, col=1)
     fig.update_yaxes(title_text="Относит. ошибка, %", row=1, col=1)
     return fig
 
@@ -402,11 +402,51 @@ def draw_histogram_model_multi(
     fig.update_layout(barmode="overlay")
     fig.update_xaxes(dtick=bin_size, row=1, col=1)
     fig.update_yaxes(title_text="Скважин", title_font_size=15, row=1, col=1)
-    fig.update_xaxes(
-        title_text=title_text + "\n"
-                                f"Месторождение: <em>{oilfield}</em>. Количество скважин: <em>{df_err[models[i]].shape[1]}</em>",
-        title_font_size=16,
-        row=1,
-        col=1,
-    )
+    # fig.update_xaxes(
+    #     title_text=title_text + "\n"
+    #                             f"Месторождение: <em>{oilfield}</em>. Количество скважин: <em>{df_err[models[i]].shape[1]}</em>",
+    #     title_font_size=16,
+    #     row=1,
+    #     col=1,
+    # )
+    return fig
+
+# таблица со статистическими результатами всех моделей
+def draw_table_statistics(models: list, df_err: dict, df_err_liq: dict,
+                          model_mean: dict, model_mean_liq: dict, MODEL_NAMES: dict):
+    models_names = [] # названия скважин
+    mean_error_liq_wells = []  # модуль средняя относительная ошибка жидкости по скважинам
+    rmse_liq = [] # СКО жидкости
+    cumsum_liq_mean_error = []  # ошибка по накопленной добыче жидкости
+    mean_error_wells = [] # модуль средняя относительная ошибка нефти по скважинам
+    rmse_oil = [] # СКО нефти
+    cumsum_mean_error = [] # ошибка по накопленной добыче нефти
+    for model in models:
+        models_names.append(f'<b>{MODEL_NAMES[model]}<b>')
+        mean_error_liq_wells.append(round(df_err_liq[model].mean().mean(),2))
+        rmse_liq.append(round(df_err_liq[model].mean().std(), 2))
+        cumsum_liq_mean_error.append(round(model_mean_liq[model].mean(), 2))
+        if MODEL_NAMES[model] == 'CRM':
+            mean_error_wells.append(None)
+            rmse_oil.append(None)
+            cumsum_mean_error.append(None)
+        else:
+            mean_error_wells.append(round(df_err[model].mean().mean(),2))
+            rmse_oil.append(round(df_err[model].mean().std(), 2))
+            cumsum_mean_error.append(round(model_mean[model].mean(),2))
+    fig = go.Figure(data=[go.Table(header=dict(values=['', 'Модуль относительной<br>средней ошибки<br>по жидкости, %',
+                                                       'СКО ошибки<br>по жидкости',
+                                                       'Ошибка<br>по накопленной<br>добыче жидкости, %',
+                                                       'Модуль относительной<br>средней ошибки<br>по нефти, % ',
+                                                       'СКО ошибки<br>по нефти',
+                                                       'Ошибка<br>по накопленной<br>добыче нефти, %'],
+                                               align='center',
+                                               font=dict(color='black', size=12)),
+                                   cells=dict(values=[models_names,
+                                                      mean_error_liq_wells, rmse_liq, cumsum_liq_mean_error,
+                                                      mean_error_wells, rmse_oil, cumsum_mean_error,
+                                                      ],
+                                              align='center', font=dict(color='black', size=14)
+                                              ))
+                          ])
     return fig

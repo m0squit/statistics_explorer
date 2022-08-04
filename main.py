@@ -14,6 +14,7 @@ from statistics_explorer.plots import (
     draw_statistics,
     draw_wells_model,
     draw_wells_model_multi,
+    draw_table_statistics
 )
 
 
@@ -109,23 +110,23 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
         model_mean_daily_liq[model] = df_err_model_liq[model].mean(axis=1)
         model_std_daily_liq[model] = df_err_model_liq[model].std(axis=1)
 
-        temp_name = f'Распределение ошибки (нефть) "{config.MODEL_NAMES[model]}"'
-        analytics_plots[temp_name] = draw_histogram_model(
-            df_err_model[model], config.bin_size, config.oilfield, "Дебит нефти"
-        )
-        temp_name = f'Ошибка прогноза (нефть) "{config.MODEL_NAMES[model]}"'
-        analytics_plots[temp_name] = draw_wells_model(
-            df_err_model[model], "Дебит нефти"
-        )
-
-        temp_name = f'Распределение ошибки (жидкость) "{config.MODEL_NAMES[model]}"'
-        analytics_plots[temp_name] = draw_histogram_model(
-            df_err_model_liq[model], config.bin_size, config.oilfield, "Дебит жидкости"
-        )
-        temp_name = f'Ошибка прогноза (жидкость) "{config.MODEL_NAMES[model]}"'
-        analytics_plots[temp_name] = draw_wells_model(
-            df_err_model_liq[model], "Дебит жидкости"
-        )
+        # temp_name = f'Распределение ошибки (нефть) "{config.MODEL_NAMES[model]}"'
+        # analytics_plots[temp_name] = draw_histogram_model(
+        #     df_err_model[model], config.bin_size, config.oilfield, "Дебит нефти"
+        # )
+        # temp_name = f'Ошибка прогноза (нефть) "{config.MODEL_NAMES[model]}"'
+        # analytics_plots[temp_name] = draw_wells_model(
+        #     df_err_model[model], "Дебит нефти"
+        # )
+        #
+        # temp_name = f'Распределение ошибки (жидкость) "{config.MODEL_NAMES[model]}"'
+        # analytics_plots[temp_name] = draw_histogram_model(
+        #     df_err_model_liq[model], config.bin_size, config.oilfield, "Дебит жидкости"
+        # )
+        # temp_name = f'Ошибка прогноза (жидкость) "{config.MODEL_NAMES[model]}"'
+        # analytics_plots[temp_name] = draw_wells_model(
+        #     df_err_model_liq[model], "Дебит жидкости"
+        # )
 
     temp_name = f"Ошибка прогноза (нефть) сравнение моделей"
     analytics_plots[temp_name] = draw_wells_model_multi(
@@ -183,6 +184,12 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
         config.MODEL_NAMES,
         "Дебит жидкости",
     )
+    analytics_plots["Статистика по моделям"] = draw_table_statistics(models,
+                                                                     df_err_model,
+                                                                     df_err_model_liq,
+                                                                     model_mean,
+                                                                     model_mean_liq,
+                                                                     config.MODEL_NAMES)
     return analytics_plots
 
 
