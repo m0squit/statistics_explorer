@@ -427,19 +427,20 @@ def draw_table_statistics(models: list, df_err: dict, df_err_liq: dict,
         rmse_liq.append(round(df_err_liq[model].mean().std(), 2))
         cumsum_liq_mean_error.append(round(model_mean_liq[model].mean(), 2))
         if MODEL_NAMES[model] == 'CRM':
-            mean_error_wells.append(None)
-            rmse_oil.append(None)
-            cumsum_mean_error.append(None)
+            mean_error_wells.append('')
+            rmse_oil.append('')
+            cumsum_mean_error.append('')
         else:
             mean_error_wells.append(round(df_err[model].mean().mean(),2))
             rmse_oil.append(round(df_err[model].mean().std(), 2))
             cumsum_mean_error.append(round(model_mean[model].mean(),2))
-    fig = go.Figure(data=[go.Table(header=dict(values=['', 'Модуль относительной<br>средней ошибки<br>по жидкости, %',
-                                                       'СКО ошибки<br>по жидкости',
-                                                       'Ошибка<br>по накопленной<br>добыче жидкости, %',
-                                                       'Модуль относительной<br>средней ошибки<br>по нефти, % ',
-                                                       'СКО ошибки<br>по нефти',
-                                                       'Ошибка<br>по накопленной<br>добыче нефти, %'],
+    fig = go.Figure(data=[go.Table(columnwidth = [140,240,200,240,240,200,240],
+                                   header=dict(values=['', '<b>Модуль относительной<br>средней ошибки<br>по жидкости, %<b>',
+                                                       '<b>СКО ошибки<br>по жидкости<b>',
+                                                       '<b>Ошибка<br>по накопленной<br>добыче жидкости, %<b>',
+                                                       '<b>Модуль относительной<br>средней ошибки<br>по нефти, %<b>',
+                                                       '<b>СКО ошибки<br>по нефти<b>',
+                                                       '<b>Ошибка<br>по накопленной<br>добыче нефти, %<b>'],
                                                align='center',
                                                font=dict(color='black', size=12)),
                                    cells=dict(values=[models_names,
@@ -449,4 +450,8 @@ def draw_table_statistics(models: list, df_err: dict, df_err_liq: dict,
                                               align='center', font=dict(color='black', size=14)
                                               ))
                           ])
+
+    fig.update_layout(
+        height=630,
+        width=1500)
     return fig

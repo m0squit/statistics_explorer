@@ -41,6 +41,9 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
     # Daily model error
     df_err_model = {key: pd.DataFrame(index=config.dates) for key in models}
     df_err_model_liq = {key: pd.DataFrame(index=config.dates) for key in models}
+    # для распределения ошибки
+    df_err_model_distribution = {key: pd.DataFrame(index=config.dates) for key in models}
+    df_err_model_liq_distribution = {key: pd.DataFrame(index=config.dates) for key in models}
     # Cumulative model error
     df_cumerr_model = {key: pd.DataFrame(index=config.dates) for key in models}
     df_cumerr_model_liq = {key: pd.DataFrame(index=config.dates) for key in models}
@@ -70,6 +73,14 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
             )
             df_err_model_liq[model][f"{_well_name}"] = calc_relative_error(
                 q_fact_liq, q_model_liq, use_abs=config.use_abs
+            )
+            # ошибка для распределения
+            df_err_model_distribution[model][f"{_well_name}"] = calc_relative_error(
+                q_fact, q_model, use_abs=False
+            )
+            # ошибка для распределения
+            df_err_model_liq_distribution[model][f"{_well_name}"] = calc_relative_error(
+                q_fact, q_model, use_abs=False
             )
             # Ошибка по накопленной добыче
             Q_model = q_model.cumsum()
@@ -134,7 +145,7 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
     )
     temp_name_multi_oil = f"Распределение ошибки (нефть) сравнение моделей"
     analytics_plots[temp_name_multi_oil] = draw_histogram_model_multi(
-        df_err_model,
+        df_err_model_distribution,
         config.bin_size,
         config.oilfield,
         models,
@@ -147,7 +158,7 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
     )
     temp_name_multi_liq = f"Распределение ошибки (жидкость) сравнение моделей"
     analytics_plots[temp_name_multi_liq] = draw_histogram_model_multi(
-        df_err_model_liq,
+        df_err_model_liq_distribution,
         config.bin_size,
         config.oilfield,
         models,
