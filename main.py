@@ -12,9 +12,9 @@ from statistics_explorer.plots import (
     draw_histogram_model_multi,
     draw_performance,
     draw_statistics,
+    draw_table_statistics,
     draw_wells_model,
     draw_wells_model_multi,
-    draw_table_statistics
 )
 
 
@@ -42,8 +42,12 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
     df_err_model = {key: pd.DataFrame(index=config.dates) for key in models}
     df_err_model_liq = {key: pd.DataFrame(index=config.dates) for key in models}
     # для распределения ошибки
-    df_err_model_distribution = {key: pd.DataFrame(index=config.dates) for key in models}
-    df_err_model_liq_distribution = {key: pd.DataFrame(index=config.dates) for key in models}
+    df_err_model_distribution = {
+        key: pd.DataFrame(index=config.dates) for key in models
+    }
+    df_err_model_liq_distribution = {
+        key: pd.DataFrame(index=config.dates) for key in models
+    }
     # Cumulative model error
     df_cumerr_model = {key: pd.DataFrame(index=config.dates) for key in models}
     df_cumerr_model_liq = {key: pd.DataFrame(index=config.dates) for key in models}
@@ -56,6 +60,21 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
     model_std_daily = dict.fromkeys(models)
     model_mean_daily_liq = dict.fromkeys(models)
     model_std_daily_liq = dict.fromkeys(models)
+    # find the most well
+    mvp_wells = {key: {} for key in ["liq", "oil"]}
+    for model in models:
+        model_well_sum_liq_fact = 0
+        model_well_sum_oil_fact = 0
+        for _well_name in config.well_names:
+            # Check if current model has this well
+            if f"{_well_name}_oil_true" not in dfs[model].columns:
+                continue
+            if dfs[model][f"{_well_name}_liq_true"].sum() >= model_well_sum_liq_fact:
+                model_well_sum_liq_fact = dfs[model][f"{_well_name}_liq_true"].sum()
+            if dfs[model][f"{_well_name}_oil_true"].sum() >= model_well_sum_oil_fact:
+                model_well_sum_oil_fact = dfs[model][f"{_well_name}_oil_true"].sum()
+        mvp_wells["liq"][model] = model_well_sum_liq_fact
+        mvp_wells["oil"][model] = model_well_sum_oil_fact
 
     # Calculations
     for model in models:
@@ -74,6 +93,13 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
             df_err_model_liq[model][f"{_well_name}"] = calc_relative_error(
                 q_fact_liq, q_model_liq, use_abs=config.use_abs
             )
+            # ошибка с учётом дебита
+            df_err_model[model][f"{_well_name}"] = df_err_model[model][
+                                                       f"{_well_name}"
+                                                   ] * (q_fact.sum() / mvp_wells["oil"][model])
+            df_err_model_liq[model][f"{_well_name}"] = df_err_model_liq[model][
+                                                           f"{_well_name}"
+                                                       ] * (q_fact_liq.sum() / mvp_wells["liq"][model])
             # ошибка для распределения
             df_err_model_distribution[model][f"{_well_name}"] = calc_relative_error(
                 q_fact, q_model, use_abs=False
@@ -81,6 +107,17 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
             # ошибка для распределения
             df_err_model_liq_distribution[model][f"{_well_name}"] = calc_relative_error(
                 q_fact, q_model, use_abs=False
+            )
+            # ошибка с учётом дебита
+            df_err_model_distribution[model][
+                f"{_well_name}"
+            ] = df_err_model_distribution[model][f"{_well_name}"] * (
+                    q_fact.sum() / mvp_wells["oil"][model]
+            )
+            df_err_model_liq_distribution[model][
+                f"{_well_name}"
+            ] = df_err_model_liq_distribution[model][f"{_well_name}"] * (
+                    q_fact_liq.sum() / mvp_wells["liq"][model]
             )
             # Ошибка по накопленной добыче
             Q_model = q_model.cumsum()
@@ -93,6 +130,14 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
             df_cumerr_model_liq[model][f"{_well_name}"] = calc_relative_error(
                 Q_fact_liq, Q_model_liq, use_abs=config.use_abs
             )
+            # ошибка с учётом дебита
+            df_cumerr_model[model][f"{_well_name}"] = df_cumerr_model[model][
+                                                          f"{_well_name}"
+                                                      ] * (q_fact.sum() / mvp_wells["oil"][model])
+            df_cumerr_model_liq[model][f"{_well_name}"] = df_cumerr_model_liq[model][
+                                                              f"{_well_name}"
+                                                          ] * (q_fact_liq.sum() / mvp_wells["liq"][model])
+
             df_perf[model]["факт"] += q_fact.fillna(0)
             df_perf[model]["модель"] += q_model.fillna(0)
             df_perf_liq[model]["факт"] += q_fact_liq.fillna(0)
@@ -195,19 +240,21 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
         config.MODEL_NAMES,
         "Дебит жидкости",
     )
-    analytics_plots["Статистика по моделям"] = draw_table_statistics(models,
-                                                                     df_err_model,
-                                                                     df_err_model_liq,
-                                                                     model_mean,
-                                                                     model_mean_liq,
-                                                                     config.MODEL_NAMES)
+    analytics_plots["Статистика по моделям"] = draw_table_statistics(
+        models,
+        df_err_model,
+        df_err_model_liq,
+        model_mean,
+        model_mean_liq,
+        config.MODEL_NAMES,
+    )
     return analytics_plots
 
 
 if __name__ == "__main__":
     # Конфиг
     config_stats = ConfigStatistics(
-        oilfield="Отдельное",
+        oilfield="Крайнее",
         dates=pd.date_range(
             datetime.date(2022, 2, 1), datetime.date(2022, 4, 30), freq="D"
         ).date,
