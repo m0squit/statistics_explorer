@@ -295,7 +295,7 @@ def draw_statistics(
             mode=ml,
             marker=mark,
             line=dict(width=1, color=clr),
-            # legendgroup=f'group_{model}'
+            legendgroup=f'group_{model}'
         )
         # trace2 = go.Scatter(
         #     x=dates,
