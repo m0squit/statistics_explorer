@@ -28,6 +28,7 @@ def create_well_plot(name: str, dfs: dict, oilfield: str, mode: str = "oil"):
         cols=1,
         shared_xaxes=True,
         vertical_spacing=0.07,
+        column_widths=[0.65, 0.35],
         subplot_titles=[
             f"Дебит: {mode}, м3",
             "Относительная ошибка, %",
@@ -60,6 +61,7 @@ def create_well_plot(name: str, dfs: dict, oilfield: str, mode: str = "oil"):
                 mode=m,
                 marker=mark,
                 marker_color=clr,
+                legendgroup=f'group_{model}'
             )
             fig.add_trace(trace, row=1, col=1)
 
@@ -70,6 +72,7 @@ def create_well_plot(name: str, dfs: dict, oilfield: str, mode: str = "oil"):
                 mode=ml,
                 marker=mark,
                 line=dict(width=1, color=clr),
+                legendgroup=f'group_{model}'
             )
             fig.add_trace(trace, row=1, col=1)
 
@@ -220,6 +223,7 @@ def draw_performance(
             y=df_perf[model]["модель"],
             mode="markers+lines",
             line=dict(width=2, color=clr),
+            legendgroup=f'group_{model}'
         )
         trace2 = go.Scatter(
             x=x,
@@ -228,6 +232,7 @@ def draw_performance(
             marker=mark,
             line=dict(width=2, color=clr),
             showlegend=False,
+            legendgroup=f'group_{model}'
         )
         annotation_text += (
             f"<i>Среднее значение ошибки <em>{MODEL_NAMES[model]}</em>: "
@@ -235,6 +240,11 @@ def draw_performance(
         )
         fig.add_trace(trace1, row=1, col=1)
         fig.add_trace(trace2, row=2, col=1)
+        fig.update_layout(
+            legend=dict(
+                # orientation="h",
+                font=dict(size=10))
+        )
     # fig.update_xaxes(title_text=annotation_text, title_font_size=16, row=2, col=1)
     return fig
 
@@ -285,6 +295,7 @@ def draw_statistics(
             mode=ml,
             marker=mark,
             line=dict(width=1, color=clr),
+            legendgroup=f'group_{model}'
         )
         # trace2 = go.Scatter(
         #     x=dates,
@@ -301,6 +312,7 @@ def draw_statistics(
             marker=mark,
             line=dict(width=1, color=clr),
             showlegend=False,
+            legendgroup=f'group_{model}'
         )
         # trace4 = go.Scatter(
         #     x=dates,
