@@ -28,6 +28,7 @@ def create_well_plot(name: str, dfs: dict, oilfield: str, mode: str = "oil"):
         cols=1,
         shared_xaxes=True,
         vertical_spacing=0.07,
+        column_widths=[0.65, 0.35],
         subplot_titles=[
             f"Дебит: {mode}, м3",
             "Относительная ошибка, %",
@@ -60,6 +61,7 @@ def create_well_plot(name: str, dfs: dict, oilfield: str, mode: str = "oil"):
                 mode=m,
                 marker=mark,
                 marker_color=clr,
+                legendgroup=f'group_{model}'
             )
             fig.add_trace(trace, row=1, col=1)
 
@@ -70,6 +72,7 @@ def create_well_plot(name: str, dfs: dict, oilfield: str, mode: str = "oil"):
                 mode=ml,
                 marker=mark,
                 line=dict(width=1, color=clr),
+                legendgroup=f'group_{model}'
             )
             fig.add_trace(trace, row=1, col=1)
 
@@ -220,6 +223,7 @@ def draw_performance(
             y=df_perf[model]["модель"],
             mode="markers+lines",
             line=dict(width=2, color=clr),
+            legendgroup=f'group_{model}'
         )
         trace2 = go.Scatter(
             x=x,
@@ -228,6 +232,7 @@ def draw_performance(
             marker=mark,
             line=dict(width=2, color=clr),
             showlegend=False,
+            legendgroup=f'group_{model}'
         )
         annotation_text += (
             f"<i>Среднее значение ошибки <em>{MODEL_NAMES[model]}</em>: "
@@ -235,6 +240,11 @@ def draw_performance(
         )
         fig.add_trace(trace1, row=1, col=1)
         fig.add_trace(trace2, row=2, col=1)
+        fig.update_layout(
+            legend=dict(
+                # orientation="h",
+                font=dict(size=10))
+        )
     # fig.update_xaxes(title_text=annotation_text, title_font_size=16, row=2, col=1)
     return fig
 
@@ -285,6 +295,7 @@ def draw_statistics(
             mode=ml,
             marker=mark,
             line=dict(width=1, color=clr),
+            legendgroup=f'group_{model}'
         )
         # trace2 = go.Scatter(
         #     x=dates,
@@ -301,6 +312,7 @@ def draw_statistics(
             marker=mark,
             line=dict(width=1, color=clr),
             showlegend=False,
+            legendgroup=f'group_{model}'
         )
         # trace4 = go.Scatter(
         #     x=dates,
@@ -411,47 +423,71 @@ def draw_histogram_model_multi(
     # )
     return fig
 
+
 # таблица со статистическими результатами всех моделей
-def draw_table_statistics(models: list, df_err: dict, df_err_liq: dict,
-                          model_mean: dict, model_mean_liq: dict, MODEL_NAMES: dict):
-    models_names = [] # названия скважин
-    mean_error_liq_wells = []  # модуль средняя относительная ошибка жидкости по скважинам
-    rmse_liq = [] # СКО жидкости
+def draw_table_statistics(
+        models: list,
+        df_err: dict,
+        df_err_liq: dict,
+        model_mean: dict,
+        model_mean_liq: dict,
+        MODEL_NAMES: dict,
+):
+    models_names = []  # названия скважин
+    mean_error_liq_wells = (
+        []
+    )  # модуль средняя относительная ошибка жидкости по скважинам
+    rmse_liq = []  # СКО жидкости
     cumsum_liq_mean_error = []  # ошибка по накопленной добыче жидкости
-    mean_error_wells = [] # модуль средняя относительная ошибка нефти по скважинам
-    rmse_oil = [] # СКО нефти
-    cumsum_mean_error = [] # ошибка по накопленной добыче нефти
+    mean_error_wells = []  # модуль средняя относительная ошибка нефти по скважинам
+    rmse_oil = []  # СКО нефти
+    cumsum_mean_error = []  # ошибка по накопленной добыче нефти
     for model in models:
-        models_names.append(f'<b>{MODEL_NAMES[model]}<b>')
-        mean_error_liq_wells.append(round(df_err_liq[model].mean().mean(),2))
+        models_names.append(f"<b>{MODEL_NAMES[model]}<b>")
+        mean_error_liq_wells.append(round(df_err_liq[model].mean().mean(), 2))
         rmse_liq.append(round(df_err_liq[model].mean().std(), 2))
         cumsum_liq_mean_error.append(round(model_mean_liq[model].mean(), 2))
-        if MODEL_NAMES[model] == 'CRM':
-            mean_error_wells.append('')
-            rmse_oil.append('')
-            cumsum_mean_error.append('')
+        if MODEL_NAMES[model] == "CRM":
+            mean_error_wells.append("")
+            rmse_oil.append("")
+            cumsum_mean_error.append("")
         else:
-            mean_error_wells.append(round(df_err[model].mean().mean(),2))
+            mean_error_wells.append(round(df_err[model].mean().mean(), 2))
             rmse_oil.append(round(df_err[model].mean().std(), 2))
-            cumsum_mean_error.append(round(model_mean[model].mean(),2))
-    fig = go.Figure(data=[go.Table(columnwidth = [140,240,200,240,240,200,240],
-                                   header=dict(values=['', '<b>Модуль относительной<br>средней ошибки<br>по жидкости, %<b>',
-                                                       '<b>СКО ошибки<br>по жидкости<b>',
-                                                       '<b>Ошибка<br>по накопленной<br>добыче жидкости, %<b>',
-                                                       '<b>Модуль относительной<br>средней ошибки<br>по нефти, %<b>',
-                                                       '<b>СКО ошибки<br>по нефти<b>',
-                                                       '<b>Ошибка<br>по накопленной<br>добыче нефти, %<b>'],
-                                               align='center',
-                                               font=dict(color='black', size=12)),
-                                   cells=dict(values=[models_names,
-                                                      mean_error_liq_wells, rmse_liq, cumsum_liq_mean_error,
-                                                      mean_error_wells, rmse_oil, cumsum_mean_error,
-                                                      ],
-                                              align='center', font=dict(color='black', size=14)
-                                              ))
-                          ])
+            cumsum_mean_error.append(round(model_mean[model].mean(), 2))
+    fig = go.Figure(
+        data=[
+            go.Table(
+                columnwidth=[140, 240, 200, 240, 240, 200, 240],
+                header=dict(
+                    values=[
+                        "",
+                        "<b>Модуль относительной<br>средней ошибки<br>по жидкости, %<b>",
+                        "<b>СКО ошибки<br>по жидкости<b>",
+                        "<b>Ошибка<br>по накопленной<br>добыче жидкости, %<b>",
+                        "<b>Модуль относительной<br>средней ошибки<br>по нефти, %<b>",
+                        "<b>СКО ошибки<br>по нефти<b>",
+                        "<b>Ошибка<br>по накопленной<br>добыче нефти, %<b>",
+                    ],
+                    align="center",
+                    font=dict(color="black", size=12),
+                ),
+                cells=dict(
+                    values=[
+                        models_names,
+                        mean_error_liq_wells,
+                        rmse_liq,
+                        cumsum_liq_mean_error,
+                        mean_error_wells,
+                        rmse_oil,
+                        cumsum_mean_error,
+                    ],
+                    align="center",
+                    font=dict(color="black", size=14),
+                ),
+            )
+        ]
+    )
 
-    fig.update_layout(
-        height=630,
-        width=1500)
+    fig.update_layout(height=630, width=1500)
     return fig
