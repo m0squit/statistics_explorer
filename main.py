@@ -204,8 +204,8 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
         models,
         df_err_model,
         df_err_model_liq,
-        model_mean,
-        model_mean_liq,
+        df_err,
+        df_err_liq,
         config.MODEL_NAMES,
     )
     return analytics_plots

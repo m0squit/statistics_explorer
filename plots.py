@@ -429,8 +429,8 @@ def draw_table_statistics(
         models: list,
         df_err: dict,
         df_err_liq: dict,
-        model_mean: dict,
-        model_mean_liq: dict,
+        model_sum_mean: dict,
+        model_sum_mean_liq: dict,
         MODEL_NAMES: dict,
 ):
     models_names = []  # названия скважин
@@ -438,23 +438,23 @@ def draw_table_statistics(
         []
     )  # модуль средняя относительная ошибка жидкости по скважинам
     rmse_liq = []  # СКО жидкости
-    cumsum_liq_mean_error = []  # ошибка по накопленной добыче жидкости
+    sum_liq_mean_error = []  # ошибка по суммарной добыче жидкости
     mean_error_wells = []  # модуль средняя относительная ошибка нефти по скважинам
     rmse_oil = []  # СКО нефти
-    cumsum_mean_error = []  # ошибка по накопленной добыче нефти
+    sum_mean_error = []  # ошибка по суммарной добыче нефти
     for model in models:
         models_names.append(f"<b>{MODEL_NAMES[model]}<b>")
         mean_error_liq_wells.append(round(df_err_liq[model].mean().mean(), 2))
         rmse_liq.append(round(df_err_liq[model].mean().std(), 2))
-        cumsum_liq_mean_error.append(round(model_mean_liq[model].mean(), 2))
+        sum_liq_mean_error.append(round(model_sum_mean_liq[model].mean(), 2))
         if MODEL_NAMES[model] == "CRM":
             mean_error_wells.append("")
             rmse_oil.append("")
-            cumsum_mean_error.append("")
+            sum_mean_error.append("")
         else:
             mean_error_wells.append(round(df_err[model].mean().mean(), 2))
             rmse_oil.append(round(df_err[model].mean().std(), 2))
-            cumsum_mean_error.append(round(model_mean[model].mean(), 2))
+            sum_mean_error.append(round(model_sum_mean[model].mean(), 2))
     fig = go.Figure(
         data=[
             go.Table(
@@ -464,10 +464,10 @@ def draw_table_statistics(
                         "",
                         "<b>Модуль относительной<br>средней ошибки<br>по жидкости, %<b>",
                         "<b>СКО ошибки<br>по жидкости<b>",
-                        "<b>Ошибка<br>по накопленной<br>добыче жидкости, %<b>",
+                        "<b>Ошибка<br>по суммарной<br>добыче жидкости, %<b>",
                         "<b>Модуль относительной<br>средней ошибки<br>по нефти, %<b>",
                         "<b>СКО ошибки<br>по нефти<b>",
-                        "<b>Ошибка<br>по накопленной<br>добыче нефти, %<b>",
+                        "<b>Ошибка<br>по суммарной<br>добыче нефти, %<b>",
                     ],
                     align="center",
                     font=dict(color="black", size=12),
@@ -477,10 +477,10 @@ def draw_table_statistics(
                         models_names,
                         mean_error_liq_wells,
                         rmse_liq,
-                        cumsum_liq_mean_error,
+                        sum_liq_mean_error,
                         mean_error_wells,
                         rmse_oil,
-                        cumsum_mean_error,
+                        sum_mean_error,
                     ],
                     align="center",
                     font=dict(color="black", size=14),
