@@ -185,11 +185,10 @@ def draw_performance(
     colors = px.colors.qualitative.Dark24
     models = [model for model in dfs.keys() if not (df_perf[model]["факт"] == 0).all()]
     # сортировка моделей, у которых факт совпадает
-    models_count = defaultdict(int)
+    models_count = {v: k for k,v in enumerate(models, start=1)}
     for combination in list(combinations(models, 2)):
         if df_perf[combination[0]]["факт"].equals(df_perf[combination[1]]["факт"]):
             models_count[combination[0]] += 1
-            models_count[combination[1]] += 1
     # словарь с одинаковыми фактами
     models_same = defaultdict(list)
     for model, values in models_count.items():
