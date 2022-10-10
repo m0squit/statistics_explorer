@@ -61,7 +61,7 @@ def create_well_plot(name: str, dfs: dict, oilfield: str, mode: str = "oil"):
                 mode=m,
                 marker=mark,
                 marker_color=clr,
-                legendgroup=f'group_{model}'
+                legendgroup=f"group_{model}",
             )
             fig.add_trace(trace, row=1, col=1)
 
@@ -72,7 +72,7 @@ def create_well_plot(name: str, dfs: dict, oilfield: str, mode: str = "oil"):
                 mode=ml,
                 marker=mark,
                 line=dict(width=1, color=clr),
-                legendgroup=f'group_{model}'
+                legendgroup=f"group_{model}",
             )
             fig.add_trace(trace, row=1, col=1)
 
@@ -185,10 +185,10 @@ def draw_performance(
     colors = px.colors.qualitative.Dark24
     models = [model for model in dfs.keys() if not (df_perf[model]["факт"] == 0).all()]
     # сортировка моделей, у которых факт совпадает
-    models_count = {v: k for k,v in enumerate(models, start=1)}
+    models_count = {v: k for k, v in enumerate(models, start=1)}
     for combination in list(combinations(models, 2)):
         if df_perf[combination[0]]["факт"].equals(df_perf[combination[1]]["факт"]):
-            models_count[combination[0]] += 1
+            models_count[combination[1]] = models_count[combination[0]]
     # словарь с одинаковыми фактами
     models_same = defaultdict(list)
     for model, values in models_count.items():
@@ -222,7 +222,7 @@ def draw_performance(
             y=df_perf[model]["модель"],
             mode="markers+lines",
             line=dict(width=2, color=clr),
-            legendgroup=f'group_{model}'
+            legendgroup=f"group_{model}",
         )
         trace2 = go.Scatter(
             x=x,
@@ -231,7 +231,7 @@ def draw_performance(
             marker=mark,
             line=dict(width=2, color=clr),
             showlegend=False,
-            legendgroup=f'group_{model}'
+            legendgroup=f"group_{model}",
         )
         annotation_text += (
             f"<i>Среднее значение ошибки <em>{MODEL_NAMES[model]}</em>: "
@@ -242,7 +242,8 @@ def draw_performance(
         fig.update_layout(
             legend=dict(
                 # orientation="h",
-                font=dict(size=10))
+                font=dict(size=10)
+            )
         )
     # fig.update_xaxes(title_text=annotation_text, title_font_size=16, row=2, col=1)
     return fig
@@ -294,7 +295,7 @@ def draw_statistics(
             mode=ml,
             marker=mark,
             line=dict(width=1, color=clr),
-            legendgroup=f'group_{model}'
+            legendgroup=f"group_{model}",
         )
         # trace2 = go.Scatter(
         #     x=dates,
@@ -311,7 +312,7 @@ def draw_statistics(
             marker=mark,
             line=dict(width=1, color=clr),
             showlegend=False,
-            legendgroup=f'group_{model}'
+            legendgroup=f"group_{model}",
         )
         # trace4 = go.Scatter(
         #     x=dates,
