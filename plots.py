@@ -187,7 +187,7 @@ def draw_performance(
     # сортировка моделей, у которых факт совпадает
     models_count = {v: k for k, v in enumerate(models, start=1)}
     for combination in list(combinations(models, 2)):
-        if df_perf[combination[0]]["факт"].equals(df_perf[combination[1]]["факт"]):
+        if df_perf[combination[0]]["факт"].round(1).equals(df_perf[combination[1]]["факт"].round(1)):
             models_count[combination[1]] = models_count[combination[0]]
     # словарь с одинаковыми фактами
     models_same = defaultdict(list)
