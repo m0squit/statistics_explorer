@@ -8,7 +8,7 @@ class ConfigStatistics:
         "ensemble": "Ансамбль",
         "CRM": "CRM",
         "CRMIP": "CRMIP",
-        "fedot": "CRM+ML",
+        "fedot": "Гибридная",
         "true": "Факт",
         "Hybrid": "Hybrid",
         "Syntetic": "Syntetic",
