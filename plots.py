@@ -162,6 +162,7 @@ def draw_performance(
     modes_decode = {
         "oil": "нефти",
         "liq": "жидкости",
+        "gas": "газа",
     }
     fig = make_subplots(
         rows=2,
@@ -429,8 +430,10 @@ def draw_table_statistics(
         models: list,
         df_err: dict,
         df_err_liq: dict,
+        df_err_gas: dict,
         model_sum_mean: dict,
         model_sum_mean_liq: dict,
+        model_sum_mean_gas: dict,
         MODEL_NAMES: dict,
 ):
     models_names = []  # названия скважин
@@ -442,6 +445,9 @@ def draw_table_statistics(
     mean_error_wells = []  # модуль средняя относительная ошибка нефти по скважинам
     rmse_oil = []  # СКО нефти
     sum_mean_error = []  # ошибка по суммарной добыче нефти
+    mean_error_gas_wells = []  # модуль средняя относительная ошибка газа по скважинам
+    rmse_gas = []  # СКО газа
+    sum_gas_mean_error = []  # ошибка по суммарной добыче газа
     for model in models:
         models_names.append(f"<b>{MODEL_NAMES[model]}<b>")
         mean_error_liq_wells.append(round(df_err_liq[model].mean().mean(), 2))
@@ -455,10 +461,13 @@ def draw_table_statistics(
             mean_error_wells.append(round(df_err[model].mean().mean(), 2))
             rmse_oil.append(round(df_err[model].mean().std(), 2))
             sum_mean_error.append(round(model_sum_mean[model].mean(), 2))
+            mean_error_gas_wells.append(round(df_err_gas[model].mean().mean(), 2))
+            rmse_gas.append(round(df_err_gas[model].mean().std(), 2))
+            sum_gas_mean_error.append(round(model_sum_mean_gas[model].mean(), 2))
     fig = go.Figure(
         data=[
             go.Table(
-                columnwidth=[140, 240, 200, 240, 240, 200, 240],
+                columnwidth=[140, 240, 200, 240, 240, 200, 240, 200, 240],
                 header=dict(
                     values=[
                         "",
@@ -468,6 +477,9 @@ def draw_table_statistics(
                         "<b>Модуль относительной<br>средней ошибки<br>по нефти, %<b>",
                         "<b>СКО ошибки<br>по нефти<b>",
                         "<b>Ошибка<br>по суммарной<br>добыче нефти, %<b>",
+                        "<b>Модуль относительной<br>средней ошибки<br>по газу, %<b>",
+                        "<b>СКО ошибки<br>по газу<b>",
+                        "<b>Ошибка<br>по суммарной<br>добыче газу, %<b>",
                     ],
                     align="center",
                     font=dict(color="black", size=12),
@@ -481,6 +493,9 @@ def draw_table_statistics(
                         mean_error_wells,
                         rmse_oil,
                         sum_mean_error,
+                        mean_error_gas_wells,
+                        rmse_gas,
+                        sum_gas_mean_error,
                     ],
                     align="center",
                     font=dict(color="black", size=14),

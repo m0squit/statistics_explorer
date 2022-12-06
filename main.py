@@ -30,6 +30,10 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
         key: pd.DataFrame(data=0, index=config.dates, columns=["факт", "модель"])
         for key in models
     }
+    df_perf_gas = {
+        key: pd.DataFrame(data=0, index=config.dates, columns=["факт", "модель"])
+        for key in models
+    }
     df_err = {
         key: pd.DataFrame(data=0, index=config.dates, columns=["модель"])
         for key in models
@@ -38,9 +42,14 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
         key: pd.DataFrame(data=0, index=config.dates, columns=["модель"])
         for key in models
     }
+    df_err_gas = {
+        key: pd.DataFrame(data=0, index=config.dates, columns=["модель"])
+        for key in models
+    }
     # Daily model error
     df_err_model = {key: pd.DataFrame(index=config.dates) for key in models}
     df_err_model_liq = {key: pd.DataFrame(index=config.dates) for key in models}
+    df_err_model_gas = {key: pd.DataFrame(index=config.dates) for key in models}
     # для распределения ошибки
     df_err_model_distribution = {
         key: pd.DataFrame(index=config.dates) for key in models
@@ -48,18 +57,26 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
     df_err_model_liq_distribution = {
         key: pd.DataFrame(index=config.dates) for key in models
     }
+    df_err_model_gas_distribution = {
+        key: pd.DataFrame(index=config.dates) for key in models
+    }
     # Cumulative model error
     df_cumerr_model = {key: pd.DataFrame(index=config.dates) for key in models}
     df_cumerr_model_liq = {key: pd.DataFrame(index=config.dates) for key in models}
+    df_cumerr_model_gas = {key: pd.DataFrame(index=config.dates) for key in models}
 
     model_mean = dict.fromkeys(models)
     model_std = dict.fromkeys(models)
     model_mean_liq = dict.fromkeys(models)
     model_std_liq = dict.fromkeys(models)
+    model_mean_gas = dict.fromkeys(models)
+    model_std_gas = dict.fromkeys(models)
     model_mean_daily = dict.fromkeys(models)
     model_std_daily = dict.fromkeys(models)
     model_mean_daily_liq = dict.fromkeys(models)
     model_std_daily_liq = dict.fromkeys(models)
+    model_mean_daily_gas = dict.fromkeys(models)
+    model_std_daily_gas = dict.fromkeys(models)
 
     # Calculations
     for model in models:
@@ -71,6 +88,8 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
             q_model = dfs[model][f"{_well_name}_oil_pred"]
             q_fact_liq = dfs[model][f"{_well_name}_liq_true"]
             q_model_liq = dfs[model][f"{_well_name}_liq_pred"]
+            q_fact_gas = dfs[model][f"{_well_name}_gas_true"]
+            q_model_gas = dfs[model][f"{_well_name}_gas_pred"]
             # Ошибка по суточной добыче
             df_err_model[model][f"{_well_name}"] = calc_relative_error(
                 q_fact, q_model, use_abs=config.use_abs
@@ -78,12 +97,18 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
             df_err_model_liq[model][f"{_well_name}"] = calc_relative_error(
                 q_fact_liq, q_model_liq, use_abs=config.use_abs
             )
+            df_err_model_gas[model][f"{_well_name}"] = calc_relative_error(
+                q_fact_gas, q_model_gas, use_abs=config.use_abs
+            )
             # ошибка для распределения
             df_err_model_distribution[model][f"{_well_name}"] = calc_relative_error(
                 q_fact, q_model, use_abs=False
             )
             # ошибка для распределения
             df_err_model_liq_distribution[model][f"{_well_name}"] = calc_relative_error(
+                q_fact, q_model, use_abs=False
+            )
+            df_err_model_gas_distribution[model][f"{_well_name}"] = calc_relative_error(
                 q_fact, q_model, use_abs=False
             )
             # Ошибка по накопленной добыче
@@ -97,20 +122,34 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
             df_cumerr_model_liq[model][f"{_well_name}"] = calc_relative_error(
                 Q_fact_liq, Q_model_liq, use_abs=config.use_abs
             )
+            Q_model_gas = q_model_gas.cumsum()
+            Q_fact_gas = q_fact_gas.cumsum()
+            df_cumerr_model_gas[model][f"{_well_name}"] = calc_relative_error(
+                Q_fact_gas, Q_model_gas, use_abs=config.use_abs
+            )
 
             df_perf[model]["факт"] += q_fact.fillna(0)
             df_perf[model]["модель"] += q_model.fillna(0)
             df_perf_liq[model]["факт"] += q_fact_liq.fillna(0)
             df_perf_liq[model]["модель"] += q_model_liq.fillna(0)
+            df_perf_gas[model]["факт"] += q_fact_gas.fillna(0)
+            df_perf_gas[model]["модель"] += q_model_gas.fillna(0)
 
         # for model in models:
         # Ошибка по суммарной добыче на каждые сутки
         df_err[model]["модель"] = calc_relative_error(
-            df_perf[model]["факт"], df_perf[model]["модель"], use_abs=config.use_abs
+            df_perf[model]["факт"],
+            df_perf[model]["модель"],
+            use_abs=config.use_abs
         )
         df_err_liq[model]["модель"] = calc_relative_error(
             df_perf_liq[model]["факт"],
             df_perf_liq[model]["модель"],
+            use_abs=config.use_abs,
+        )
+        df_err_gas[model]["модель"] = calc_relative_error(
+            df_perf_gas[model]["факт"],
+            df_perf_gas[model]["модель"],
             use_abs=config.use_abs,
         )
 
@@ -120,11 +159,17 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
         model_mean_liq[model] = df_cumerr_model_liq[model].mean(axis=1)
         model_std_liq[model] = df_cumerr_model_liq[model].std(axis=1)
 
+        model_mean_gas[model] = df_cumerr_model_gas[model].mean(axis=1)
+        model_std_gas[model] = df_cumerr_model_gas[model].std(axis=1)
+
         model_mean_daily[model] = df_err_model[model].mean(axis=1)
         model_std_daily[model] = df_err_model[model].std(axis=1)
 
         model_mean_daily_liq[model] = df_err_model_liq[model].mean(axis=1)
         model_std_daily_liq[model] = df_err_model_liq[model].std(axis=1)
+
+        model_mean_daily_gas[model] = df_err_model_gas[model].mean(axis=1)
+        model_std_daily_gas[model] = df_err_model_gas[model].std(axis=1)
 
         # temp_name = f'Распределение ошибки (нефть) "{config.MODEL_NAMES[model]}"'
         # analytics_plots[temp_name] = draw_histogram_model(
@@ -170,12 +215,28 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
         config.MODEL_NAMES,
         "Дебит жидкости",
     )
+    temp_name = f"Ошибка прогноза (газ)"
+    analytics_plots[temp_name] = draw_wells_model_multi(
+        df_err_model_gas, models, config.MODEL_NAMES, "Дебит газ"
+    )
+    temp_name_multi_gas = f"Распределение ошибки (газ)"
+    analytics_plots[temp_name_multi_gas] = draw_histogram_model_multi(
+        df_err_model_gas_distribution,
+        config.bin_size,
+        config.oilfield,
+        models,
+        config.MODEL_NAMES,
+        "Дебит газа",
+    )
     # Draw common statistics
     analytics_plots["Суммарная добыча нефти"] = draw_performance(
         dfs, df_perf, df_err, config.oilfield, config.MODEL_NAMES, mode="oil"
     )
     analytics_plots["Суммарная добыча жидкости"] = draw_performance(
         dfs, df_perf_liq, df_err_liq, config.oilfield, config.MODEL_NAMES, mode="liq"
+    )
+    analytics_plots["Суммарная добыча газа"] = draw_performance(
+        dfs, df_perf_gas, df_err_gas, config.oilfield, config.MODEL_NAMES, mode="gas"
     )
 
     analytics_plots["Статистика по нефти"] = draw_statistics(
@@ -200,12 +261,25 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
         config.MODEL_NAMES,
         "Дебит жидкости",
     )
+    analytics_plots["Статистика по газу"] = draw_statistics(
+        models,
+        model_mean_gas,
+        model_std_gas,
+        model_mean_daily_gas,
+        model_std_daily_gas,
+        config.oilfield,
+        config.dates,
+        config.MODEL_NAMES,
+        "Дебит газа",
+    )
     analytics_plots["Статистика по моделям"] = draw_table_statistics(
         models,
         df_err_model,
         df_err_model_liq,
+        df_err_model_gas,
         df_err,
         df_err_liq,
+        df_err_gas,
         config.MODEL_NAMES,
     )
     return analytics_plots
