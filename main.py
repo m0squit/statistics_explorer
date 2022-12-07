@@ -82,7 +82,11 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
     for model in models:
         for _well_name in config.well_names:
             # Check if current model has this well
+            if f"{_well_name}_liq_true" not in dfs[model].columns:
+                continue
             if f"{_well_name}_oil_true" not in dfs[model].columns:
+                continue
+            if f"{_well_name}_gas_true" not in dfs[model].columns:
                 continue
             q_fact = dfs[model][f"{_well_name}_oil_true"]
             q_model = dfs[model][f"{_well_name}_oil_pred"]
@@ -288,9 +292,9 @@ def calculate_statistics(dfs: dict, config: ConfigStatistics):
 if __name__ == "__main__":
     # Конфиг
     config_stats = ConfigStatistics(
-        oilfield="Крайнее",
+        oilfield="Новопортовское",
         dates=pd.date_range(
-            datetime.date(2022, 2, 1), datetime.date(2022, 4, 30), freq="D"
+            datetime.date(2022, 1, 1), datetime.date(2022, 2, 28), freq="D"
         ).date,
         use_abs=True,
         bin_size=10,

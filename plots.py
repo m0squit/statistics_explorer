@@ -288,6 +288,8 @@ def draw_statistics(
     for ind, model in enumerate(models):
         if MODEL_NAMES[model] == "CRM" and mode == "Дебит нефти":
             continue
+        if MODEL_NAMES[model] == "ftor" and mode == "Дебит газа":
+            continue
         clr = colors[ind]
         trace1 = go.Scatter(
             name=f"{MODEL_NAMES[model]}",
@@ -350,6 +352,8 @@ def draw_wells_model_multi(
     for model in models:
         if mode == "Дебит нефти" and MODEL_NAMES[model] == "CRM":
             continue
+        if mode == "Дебит газа" and MODEL_NAMES[model] == "ftor":
+            continue
         models_dict[model] = df_err[model].mean(axis=0).mean()
     models_dict = dict(sorted(models_dict.items(), key=lambda x: x[1], reverse=True))
     models_name = list(models_dict.keys())
@@ -392,6 +396,8 @@ def draw_histogram_model_multi(
     title_text = f"Усредненная относительная ошибка, %<br><br>"
     for i in range(len(models)):
         if mode == "Дебит нефти" and MODEL_NAMES[models[i]] == "CRM":
+            continue
+        if mode == "Дебит газа" and MODEL_NAMES[models[i]] == "ftor":
             continue
         x = df_err[models[i]].mean()
         fig.add_trace(
@@ -461,6 +467,11 @@ def draw_table_statistics(
             mean_error_wells.append(round(df_err[model].mean().mean(), 2))
             rmse_oil.append(round(df_err[model].mean().std(), 2))
             sum_mean_error.append(round(model_sum_mean[model].mean(), 2))
+        if MODEL_NAMES[model] == "ftor":
+            mean_error_gas_wells.append("")
+            rmse_gas.append("")
+            sum_gas_mean_error.append("")
+        else:
             mean_error_gas_wells.append(round(df_err_gas[model].mean().mean(), 2))
             rmse_gas.append(round(df_err_gas[model].mean().std(), 2))
             sum_gas_mean_error.append(round(model_sum_mean_gas[model].mean(), 2))
